@@ -6,17 +6,21 @@ interface SidebarItemProps {
     icon: LucideIcon;
     label: string;
     beta?: boolean;
+    path: string;
   };
   isActive: boolean;
+  onClick: () => void;
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ item, isActive }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ item, isActive, onClick }) => {
   return (
-    <div className={`flex items-center px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group ${
-      isActive 
-        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25' 
-        : 'hover:bg-gray-800 text-gray-300 hover:text-white'
-    }`}>
+    <div 
+      onClick={onClick}
+      className={`flex items-center px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group ${
+        isActive 
+          ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25' 
+          : 'hover:bg-gray-800 text-gray-300 hover:text-white'
+      }`}>
       <item.icon className={`w-5 h-5 transition-colors ${
         isActive 
           ? 'text-white' 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -8,6 +9,7 @@ import {
   CheckSquare,
   FolderOpen,
   Users,
+  UsersRound,
   FileText,
   Tag,
   Target,
@@ -15,7 +17,8 @@ import {
   Settings,
   CreditCard,
   Building,
-  Terminal
+  Terminal,
+  DollarSign
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import SectionHeader from './SectionHeader';
@@ -24,12 +27,14 @@ interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   activeItem?: string;
+  onNavigate?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   isCollapsed, 
   setIsCollapsed, 
-  activeItem = 'Timer' 
+  activeItem = 'Timer',
+  onNavigate
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     analyze: true,
@@ -44,32 +49,56 @@ const Sidebar: React.FC<SidebarProps> = ({
     }));
   };
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const sidebarItems = {
     track: [
-      { icon: Clock, label: 'Timer' }
+      { icon: Clock, label: 'Timer', path: '/timer' }
     ],
     analyze: [
-      { icon: BarChart3, label: 'Reports' },
-      { icon: CheckSquare, label: 'Approvals' }
+      { icon: BarChart3, label: 'Reports', path: '/reports' },
+      { icon: CheckSquare, label: 'Approvals', path: '/approvals' }
     ],
     manage: [
-      { icon: FolderOpen, label: 'Projects' },
-      { icon: Users, label: 'Clients' },
-      { icon: FileText, label: 'Invoices' },
-      { icon: Tag, label: 'Tags' },
-      { icon: Target, label: 'Goals', beta: true },
-      { icon: Link, label: 'Integrations' }
+      { icon: FolderOpen, label: 'Projects', path: '/projects' },
+      { icon: Users, label: 'Clients', path: '/clients' },
+      { icon: UsersRound, label: 'Members', path: '/members' },
+      { icon: DollarSign, label: 'Billable rates', path: '/billable-rates' },
+      { icon: FileText, label: 'Invoices', path: '/invoices' },
+      { icon: Tag, label: 'Tags', path: '/tags' },
+      { icon: Target, label: 'Goals', beta: true, path: '/goals' },
+      { icon: Link, label: 'Integrations', path: '/integrations' }
     ],
     admin: [
-      { icon: CreditCard, label: 'Subscription' },
-      { icon: Building, label: 'Organization' },
-      { icon: Settings, label: 'Settings' },
-      { icon: Terminal, label: 'Admin Console' }
+      { icon: CreditCard, label: 'Subscription', path: '/subscription' },
+      { icon: Building, label: 'Organization', path: '/organization' },
+      { icon: Settings, label: 'Settings', path: '/settings' },
+      { icon: Terminal, label: 'Admin Console', path: '/admin-console' }
     ]
   };
 
+  // Determine active item based on current route
+  const getActiveLabel = () => {
+    const allItems = [
+      ...sidebarItems.track,
+      ...sidebarItems.analyze,
+      ...sidebarItems.manage,
+      ...sidebarItems.admin
+    ];
+    const currentItem = allItems.find(item => item.path === location.pathname);
+    return currentItem?.label || activeItem;
+  };
+
+  const currentActiveItem = getActiveLabel();
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    onNavigate?.(); // Close mobile menu if provided
+  };
+
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col`}>
+    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col h-full`}>
       {/* Logo/Header */}
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between">
@@ -98,7 +127,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Track</div>
           )}
           {sidebarItems.track.map((item, idx) => (
-            <SidebarItem key={idx} item={item} isActive={item.label === activeItem} />
+            <SidebarItem 
+              key={idx} 
+              item={item} 
+              isActive={item.label === currentActiveItem} 
+              onClick={() => handleNavigate(item.path)}
+            />
           ))}
         </div>
 
@@ -111,7 +145,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             isCollapsed={isCollapsed}
           />
           {expandedSections.analyze && sidebarItems.analyze.map((item, idx) => (
-            <SidebarItem key={idx} item={item} isActive={item.label === activeItem} />
+            <SidebarItem 
+              key={idx} 
+              item={item} 
+              isActive={item.label === currentActiveItem} 
+              onClick={() => handleNavigate(item.path)}
+            />
           ))}
         </div>
 
@@ -124,7 +163,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             isCollapsed={isCollapsed}
           />
           {expandedSections.manage && sidebarItems.manage.map((item, idx) => (
-            <SidebarItem key={idx} item={item} isActive={item.label === activeItem} />
+            <SidebarItem 
+              key={idx} 
+              item={item} 
+              isActive={item.label === currentActiveItem} 
+              onClick={() => handleNavigate(item.path)}
+            />
           ))}
         </div>
 
@@ -144,7 +188,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</div>
           )}
           {sidebarItems.admin.map((item, idx) => (
-            <SidebarItem key={idx} item={item} isActive={item.label === activeItem} />
+            <SidebarItem 
+              key={idx} 
+              item={item} 
+              isActive={item.label === currentActiveItem} 
+              onClick={() => handleNavigate(item.path)}
+            />
           ))}
         </div>
       </div>
@@ -158,13 +207,16 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {!isCollapsed && <span className="ml-3 text-sm font-medium text-gray-300">PROFILE</span>}
           </div>
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)} 
-            className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-gray-800 rounded-lg"
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          </button>
+          {/* Only show collapse button when not on mobile (when onNavigate is not provided) */}
+          {!onNavigate && (
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)} 
+              className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-gray-800 rounded-lg"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            </button>
+          )}
         </div>
       </div>
     </div>
