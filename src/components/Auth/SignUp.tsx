@@ -1,6 +1,112 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { registerUser } from "@/redux/slice/authSlice";
 
 const SignupPage: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading } = useAppSelector((state) => state.auth);
+  
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    account_type: "team" as "team" | "individual",
+    org_name: "",
+  });
+  const [showPasswordField, setShowPasswordField] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleEmailContinue = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email) {
+      toast.error("Please enter your email");
+      return;
+    }
+    
+    setShowPasswordField(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email || !formData.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    // Validate organization name for team accounts
+    if (formData.account_type === "team" && !formData.org_name?.trim()) {
+      toast.error("Organization name is required for team accounts");
+      return;
+    }
+
+    try {
+      const payload: any = {
+        email: formData.email,
+        password: formData.password,
+        account_type: formData.account_type,
+      };
+
+      if (formData.org_name?.trim()) {
+        payload.org_name = formData.org_name.trim();
+      }
+
+      console.log("🚀 Sending registration request:", payload);
+      const result = await dispatch(registerUser(payload)).unwrap();
+      console.log("✅ Registration successful:", result);
+      
+      toast.success("Registration successful!");
+      
+      // Add 2-3 second delay with loader before navigation
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      navigate("/timer");
+    } catch (error: any) {
+      console.error("❌ Registration failed - Full error:", error);
+      console.error("❌ Error detail:", error?.detail);
+      console.error("❌ Error message:", error?.message);
+      
+      // Better error message handling
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (error?.detail) {
+        if (typeof error.detail === 'string') {
+          errorMessage = error.detail;
+        } else if (Array.isArray(error.detail)) {
+          errorMessage = error.detail.map((e: any) => e.msg || e.message || e).join(', ');
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        if (error.toLowerCase().includes('validation')) {
+          errorMessage = "Validation error. Please check your input.";
+        } else if (error.toLowerCase().includes('already')) {
+          errorMessage = "This email is already registered.";
+        } else if (error.toLowerCase().includes('network')) {
+          errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:8080";
+        } else {
+          errorMessage = error;
+        }
+      }
+      
+      toast.error(errorMessage);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black relative">
       {/* Background Shapes */}
@@ -23,7 +129,7 @@ const SignupPage: React.FC = () => {
             Sign up and <span className="text-white">get tracking!</span>
           </p>
 
-          <form className="mt-6 space-y-4">
+          <form className="mt-6 space-y-4" onSubmit={showPasswordField ? handleSubmit : handleEmailContinue}>
             <div>
               <label htmlFor="email" className="block text-sm text-gray-300">
                 EMAIL
@@ -31,15 +137,80 @@ const SignupPage: React.FC = () => {
               <input
                 type="email"
                 id="email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full mt-1 px-3 py-2 rounded-md bg-black border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                required
+                disabled={showPasswordField}
               />
             </div>
 
+            {showPasswordField && (
+              <>
+                <div>
+                  <label htmlFor="password" className="block text-sm text-gray-300">
+                    PASSWORD
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full mt-1 px-3 py-2 rounded-md bg-black border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    required
+                    minLength={8}
+                    placeholder="At least 8 characters"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="account_type" className="block text-sm text-gray-300">
+                    ACCOUNT TYPE
+                  </label>
+                  <select
+                    id="account_type"
+                    value={formData.account_type}
+                    onChange={handleChange}
+                    className="w-full mt-1 px-3 py-2 rounded-md bg-black border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  >
+                    <option value="team">Team</option>
+                    <option value="individual">Individual</option>
+                  </select>
+                </div>
+
+                {formData.account_type === "team" && (
+                  <div>
+                    <label htmlFor="org_name" className="block text-sm text-gray-300">
+                      ORGANIZATION NAME *
+                    </label>
+                    <input
+                      type="text"
+                      id="org_name"
+                      value={formData.org_name}
+                      onChange={handleChange}
+                      className="w-full mt-1 px-3 py-2 rounded-md bg-black border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      placeholder="My Organization"
+                      required
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordField(false)}
+                  className="text-sm text-pink-400 hover:underline"
+                >
+                  ← Change email
+                </button>
+              </>
+            )}
+
             <button
               type="submit"
-              className="w-full py-2 rounded-md bg-pink-400 text-black font-medium hover:bg-pink-300 transition"
+              disabled={loading}
+              className="w-full py-2 rounded-md bg-pink-400 text-black font-medium hover:bg-pink-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign up for free
+              {loading ? "Creating account..." : showPasswordField ? "Create account" : "Sign up for free"}
             </button>
           </form>
 
@@ -84,7 +255,7 @@ const SignupPage: React.FC = () => {
 
           {/* Existing Account Link */}
           <p className="mt-4 text-sm text-white">
-            <a href="#" className="hover:underline">
+            <a href="/login" className="hover:underline">
               Log in to an existing account
             </a>
           </p>

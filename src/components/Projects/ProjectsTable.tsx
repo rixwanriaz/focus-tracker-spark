@@ -3,7 +3,9 @@ import { ArrowUpDown, Pin } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Project as ApiProject } from "@/redux/api";
 
+// Display Project interface for UI components
 export interface Project {
   id: string;
   name: string;
@@ -16,6 +18,20 @@ export interface Project {
   archived: boolean;
   color?: string;
 }
+
+// Type adapter to convert API Project to Display Project
+export const adaptApiProjectToDisplay = (apiProject: ApiProject): Project => ({
+  id: apiProject.id,
+  name: apiProject.name,
+  client: apiProject.client_id, // This would need to be resolved from client API
+  timeframe: apiProject.end_date ? new Date(apiProject.end_date).toLocaleDateString() : undefined,
+  timeStatus: 0, // This would come from time tracking API
+  billableStatus: 'billable', // This would be determined by project settings
+  team: [], // This would come from project members API
+  pinned: false, // This would need to be added to the API
+  archived: false, // This would need to be added to the API
+  color: '#8b5cf6', // This would need to be added to the API
+});
 
 interface ProjectsTableProps {
   projects: Project[];

@@ -18,12 +18,12 @@ import {
 } from '@/components/ui/select';
 import { Eye, ChevronDown, ChevronUp, DollarSign, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Project } from './ProjectsTable';
+import { CreateProjectRequest } from '@/redux/api';
 
 interface NewProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateProject: (project: Omit<Project, 'id'>) => void;
+  onCreateProject: (project: CreateProjectRequest) => void;
 }
 
 const projectColors = [
@@ -38,6 +38,13 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    budget_amount: 0,
+    budget_currency: 'USD',
+    project_manager_id: '',
+    client_id: '',
     color: projectColors[0],
     privacy: 'private',
     inviteMembers: '',
@@ -55,19 +62,30 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     
     if (!formData.name.trim()) return;
 
-    onCreateProject({
+    // Create project data for API
+    const projectData: CreateProjectRequest = {
       name: formData.name,
-      timeStatus: 0,
-      billableStatus: formData.billable ? 'billable' : 'non-billable',
-      team: formData.inviteMembers ? [formData.inviteMembers] : [],
-      pinned: false,
-      archived: false,
-      color: formData.color,
-    });
+      description: formData.description,
+      start_date: formData.start_date || new Date().toISOString().split('T')[0],
+      end_date: formData.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+      budget_amount: formData.budget_amount,
+      budget_currency: formData.budget_currency,
+      project_manager_id: formData.project_manager_id || '7e7d7a2c-c09f-4e6f-b682-ca3ca920e522', // Default manager ID
+      client_id: formData.client_id || '5b3fa7ba-57d3-4017-a65b-d57dcd2db643', // Default client ID
+    };
+
+    onCreateProject(projectData);
 
     // Reset form
     setFormData({
       name: '',
+      description: '',
+      start_date: '',
+      end_date: '',
+      budget_amount: 0,
+      budget_currency: 'USD',
+      project_manager_id: '',
+      client_id: '',
       color: projectColors[0],
       privacy: 'private',
       inviteMembers: '',
@@ -131,6 +149,76 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 className="flex-1 bg-transparent border-0 text-white placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-auto"
                 required
               />
+            </div>
+
+            {/* Project Description */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Description
+              </Label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Project description"
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+              />
+            </div>
+
+            {/* Project Dates */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Start Date
+                </Label>
+                <Input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  End Date
+                </Label>
+                <Input
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  className="bg-gray-800 border-gray-700 text-white"
+                />
+              </div>
+            </div>
+
+            {/* Budget */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Budget Amount
+                </Label>
+                <Input
+                  type="number"
+                  value={formData.budget_amount}
+                  onChange={(e) => setFormData({ ...formData, budget_amount: Number(e.target.value) })}
+                  placeholder="0"
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Currency
+                </Label>
+                <Select value={formData.budget_currency} onValueChange={(value) => setFormData({ ...formData, budget_currency: value })}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-700">
+                    <SelectItem value="USD" className="text-gray-300">USD</SelectItem>
+                    <SelectItem value="EUR" className="text-gray-300">EUR</SelectItem>
+                    <SelectItem value="GBP" className="text-gray-300">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Privacy Section */}

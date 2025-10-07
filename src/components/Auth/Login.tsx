@@ -1,6 +1,79 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { loginUser } from "@/redux/slice/authSlice";
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading } = useAppSelector((state) => state.auth);
+  
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email || !formData.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+      };
+      
+      console.log("🚀 Sending login request:", { email: payload.email });
+      const result = await dispatch(loginUser(payload)).unwrap();
+      console.log("✅ Login successful:", result);
+      
+      toast.success("Login successful!");
+      navigate("/timer");
+    } catch (error: any) {
+      console.error("❌ Login failed - Full error:", error);
+      console.error("❌ Error detail:", error?.detail);
+      console.error("❌ Error message:", error?.message);
+      
+      // Better error message handling
+      let errorMessage = "Login failed. Please check your credentials.";
+      
+      if (error?.detail) {
+        if (typeof error.detail === 'string') {
+          errorMessage = error.detail;
+        } else if (Array.isArray(error.detail)) {
+          errorMessage = error.detail.map((e: any) => e.msg || e.message || e).join(', ');
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        if (error.toLowerCase().includes('unauthorized') || error.toLowerCase().includes('401')) {
+          errorMessage = "Invalid email or password.";
+        } else if (error.toLowerCase().includes('validation')) {
+          errorMessage = "Validation error. Please check your input.";
+        } else if (error.toLowerCase().includes('network')) {
+          errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:8080";
+        } else {
+          errorMessage = error;
+        }
+      }
+      
+      toast.error(errorMessage);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black relative">
       {/* Background Shapes */}
@@ -23,7 +96,7 @@ const LoginPage: React.FC = () => {
         </p>
 
         {/* Form */}
-        <form className="mt-6 space-y-4">
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="block text-sm text-gray-300">
               EMAIL
@@ -31,7 +104,10 @@ const LoginPage: React.FC = () => {
             <input
               type="email"
               id="email"
+              value={formData.email}
+              onChange={handleChange}
               className="w-full mt-1 px-3 py-2 rounded-md bg-black border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+              required
             />
           </div>
 
@@ -41,12 +117,18 @@ const LoginPage: React.FC = () => {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full mt-1 px-3 py-2 rounded-md bg-black border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                required
               />
-              <span className="absolute right-3 top-3 text-gray-400 cursor-pointer">
-                👁
+              <span 
+                className="absolute right-3 top-3 text-gray-400 cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "🙈" : "👁"}
               </span>
             </div>
           </div>
@@ -60,9 +142,10 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-2 rounded-md bg-pink-400 text-black font-medium hover:bg-pink-300 transition"
+            disabled={loading}
+            className="w-full py-2 rounded-md bg-pink-400 text-black font-medium hover:bg-pink-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Log in via email
+            {loading ? "Logging in..." : "Log in via email"}
           </button>
         </form>
 
@@ -102,7 +185,7 @@ const LoginPage: React.FC = () => {
 
         {/* Signup */}
         <p className="text-center text-sm text-gray-400 mt-6">
-          <a href="#" className="hover:underline">
+          <a href="/signup" className="hover:underline">
             Sign up for an account
           </a>
         </p>

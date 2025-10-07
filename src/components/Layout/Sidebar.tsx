@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     manage: [
       { icon: FolderOpen, label: 'Projects', path: '/projects' },
       { icon: Users, label: 'Clients', path: '/clients' },
-      { icon: UsersRound, label: 'Members', path: '/members' },
+      { icon: UsersRound, label: 'Members', path: '/organization?tab=members' },
       { icon: DollarSign, label: 'Billable rates', path: '/billable-rates' },
       { icon: FileText, label: 'Invoices', path: '/invoices' },
       { icon: Tag, label: 'Tags', path: '/tags' },
