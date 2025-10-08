@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChevronDown, User, Users, DollarSign, FileText, Layout } from 'lucide-react';
+import { ChevronDown, User, Users, DollarSign, FileText, Layout, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +12,8 @@ import {
 interface ProjectFiltersProps {
   showArchived: boolean;
   onShowArchivedChange: (show: boolean) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
   activeFilters?: {
     client?: string;
     member?: string;
@@ -23,6 +26,8 @@ interface ProjectFiltersProps {
 export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
   showArchived,
   onShowArchivedChange,
+  searchQuery = '',
+  onSearchChange,
   activeFilters = {},
 }) => {
   const filterOptions = [
@@ -36,6 +41,17 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
 
   return (
     <div className="flex items-center gap-4 px-6 py-4 bg-gray-950 border-b border-gray-800">
+      {/* Search Input */}
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Search projects..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange?.(e.target.value)}
+          className="pl-10 bg-gray-900 border-gray-800 text-gray-300 placeholder-gray-500 focus:border-purple-600 focus:ring-purple-600"
+        />
+      </div>
+
       {/* Show Filter Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

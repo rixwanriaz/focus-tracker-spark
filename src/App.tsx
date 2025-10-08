@@ -13,6 +13,7 @@ import Timer from "./pages/Timer";
 import Reports from "./pages/Reports";
 import Approvals from "./pages/Approvals";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import Clients from "./pages/Clients";
 import BillableRates from "./pages/BillableRates";
 import Invoices from "./pages/Invoices";
@@ -47,6 +48,7 @@ const App = () => (
             
             {/* Manage */}
             <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:projectId" element={<ProjectDetail />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/billable-rates" element={<BillableRates />} />
             <Route path="/invoices" element={<Invoices />} />

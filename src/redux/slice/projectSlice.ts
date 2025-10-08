@@ -32,7 +32,6 @@ interface ProjectState {
   currentView: "list" | "detail" | "members" | "budget" | "overview" | "gantt";
   filters: {
     status?: string;
-    client_id?: string;
     project_manager_id?: string;
   };
 }
@@ -127,21 +126,6 @@ export const updateProject = createAsyncThunk<
   }
 });
 
-export const deleteProject = createAsyncThunk<
-  void,
-  string,
-  { rejectValue: string }
->("project/delete", async (projectId, { rejectWithValue }) => {
-  try {
-    await projectApiService.deleteProject(projectId);
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.detail ||
-      error?.message ||
-      "Failed to delete project";
-    return rejectWithValue(errorMessage);
-  }
-});
 
 // Project members async thunks
 export const addProjectMember = createAsyncThunk<
@@ -402,24 +386,6 @@ const projectSlice = createSlice({
         state.error = action.payload || "Failed to update project";
       })
 
-      // Delete Project
-      .addCase(deleteProject.pending, (state) => {
-        state.deleting = true;
-        state.error = null;
-      })
-      .addCase(deleteProject.fulfilled, (state, action) => {
-        state.deleting = false;
-        state.currentProject = null;
-        state.error = null;
-        // Remove from projects list
-        state.projects = state.projects.filter(
-          (project) => project.id !== action.meta.arg
-        );
-      })
-      .addCase(deleteProject.rejected, (state, action) => {
-        state.deleting = false;
-        state.error = action.payload || "Failed to delete project";
-      })
 
       // Add Project Member
       .addCase(addProjectMember.pending, (state) => {

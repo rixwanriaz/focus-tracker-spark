@@ -44,7 +44,6 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     budget_amount: 0,
     budget_currency: 'USD',
     project_manager_id: '',
-    client_id: '',
     color: projectColors[0],
     privacy: 'private',
     inviteMembers: '',
@@ -71,7 +70,6 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
       budget_amount: formData.budget_amount,
       budget_currency: formData.budget_currency,
       project_manager_id: formData.project_manager_id || '7e7d7a2c-c09f-4e6f-b682-ca3ca920e522', // Default manager ID
-      client_id: formData.client_id || '5b3fa7ba-57d3-4017-a65b-d57dcd2db643', // Default client ID
     };
 
     onCreateProject(projectData);
@@ -85,7 +83,6 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
       budget_amount: 0,
       budget_currency: 'USD',
       project_manager_id: '',
-      client_id: '',
       color: projectColors[0],
       privacy: 'private',
       inviteMembers: '',

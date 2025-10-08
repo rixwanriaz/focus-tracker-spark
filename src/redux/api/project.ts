@@ -6,27 +6,29 @@ import { API_CONFIG } from "../../config/api.config";
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  budget_amount: number;
-  budget_currency: string;
-  project_manager_id: string;
-  client_id: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  budget_amount?: number;
+  budget_currency?: string;
+  project_manager_id?: string;
+  organization_id: string;
   created_at: string;
   updated_at: string;
   status?: string;
+  is_active?: boolean;
+  settings?: Record<string, any>;
 }
 
 export interface CreateProjectRequest {
   name: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  budget_amount: number;
-  budget_currency: string;
-  project_manager_id: string;
-  client_id: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  budget_amount?: number;
+  budget_currency?: string;
+  project_manager_id?: string;
+  settings?: Record<string, any>;
 }
 
 export interface UpdateProjectRequest {
@@ -37,7 +39,6 @@ export interface UpdateProjectRequest {
   budget_amount?: number;
   budget_currency?: string;
   project_manager_id?: string;
-  client_id?: string;
 }
 
 export interface ProjectMember {
@@ -111,6 +112,71 @@ export interface GanttChartData {
   }>;
 }
 
+// Task-related interfaces
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  project_id: string;
+  assignee_id?: string;
+  estimate_seconds?: number;
+  start_date?: string;
+  due_date?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  assignee?: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+}
+
+export type TaskStatus = "not_started" | "in_progress" | "completed";
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  assignee_id?: string;
+  estimate_seconds?: number;
+  start_date?: string;
+  due_date?: string;
+  priority?: TaskPriority;
+  project_id: string;
+  status?: TaskStatus;
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  assignee_id?: string;
+  estimate_seconds?: number;
+  start_date?: string;
+  due_date?: string;
+  priority?: TaskPriority;
+  status?: TaskStatus;
+}
+
+export interface TaskFilters {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  assignee_id?: string;
+  due_from?: string;
+  due_to?: string;
+}
+
+export interface TaskListResponse {
+  tasks: Task[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 // Project API service functions
 export const projectApiService = {
   // 1. Create Project
@@ -125,8 +191,17 @@ export const projectApiService = {
   },
 
   // 2. Get All Projects
-  getProjects: async (): Promise<Project[]> => {
-    const response = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.BASE);
+  getProjects: async (
+    status?: string,
+    search?: string
+  ): Promise<Project[]> => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+    
+    const response = await api.get(
+      `${API_CONFIG.ENDPOINTS.PROJECTS.BASE}?${params.toString()}`
+    );
     return response.data;
   },
 
@@ -150,9 +225,15 @@ export const projectApiService = {
     return response.data;
   },
 
-  // 5. Delete Project
-  deleteProject: async (projectId: string): Promise<void> => {
-    await api.delete(API_CONFIG.ENDPOINTS.PROJECTS.BY_ID(projectId));
+  // 5. Archive Project (Soft Delete)
+  archiveProject: async (
+    projectId: string
+  ): Promise<Project> => {
+    const response = await api.patch(
+      `${API_CONFIG.ENDPOINTS.PROJECTS.BY_ID(projectId)}/archive`,
+      {}
+    );
+    return response.data;
   },
 
   // 6. Add Member to Project
@@ -219,5 +300,105 @@ export const projectApiService = {
       API_CONFIG.ENDPOINTS.PROJECTS.GANTT(projectId)
     );
     return response.data;
+  },
+};
+
+// Task API service functions
+export const taskApiService = {
+  // 1. Create Task
+  createTask: async (
+    projectId: string,
+    taskData: CreateTaskRequest
+  ): Promise<Task> => {
+    const response = await api.post(
+      API_CONFIG.ENDPOINTS.TASKS.BY_PROJECT(projectId),
+      { ...taskData, project_id: projectId, status: taskData.status || "not_started" }
+    );
+    return response.data;
+  },
+
+  // 2. Get Task by ID
+  getTask: async (taskId: string): Promise<Task> => {
+    const response = await api.get(
+      API_CONFIG.ENDPOINTS.TASKS.BY_ID(taskId)
+    );
+    return response.data;
+  },
+
+  // 3. Update Task
+  updateTask: async (
+    taskId: string,
+    data: UpdateTaskRequest
+  ): Promise<Task> => {
+    const response = await api.patch(
+      API_CONFIG.ENDPOINTS.TASKS.BY_ID(taskId),
+      data
+    );
+    return response.data;
+  },
+
+  // 4. List Tasks
+  listTasks: async (
+    filters: TaskFilters & {
+      project_id?: string;
+      organization_id?: string;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<TaskListResponse> => {
+    const params = new URLSearchParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(
+      `${API_CONFIG.ENDPOINTS.TASKS.BASE}?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  // 5. Get Tasks by Project
+  getProjectTasks: async (
+    projectId: string,
+    filters: TaskFilters = {}
+  ): Promise<Task[]> => {
+    const params = new URLSearchParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(
+      `${API_CONFIG.ENDPOINTS.TASKS.BY_PROJECT(projectId)}?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  // 6. Complete Task
+  completeTask: async (taskId: string): Promise<Task> => {
+    const response = await api.post(
+      API_CONFIG.ENDPOINTS.TASKS.COMPLETE(taskId),
+      {}
+    );
+    return response.data;
+  },
+
+  // 7. Reopen Task
+  reopenTask: async (taskId: string): Promise<Task> => {
+    const response = await api.post(
+      API_CONFIG.ENDPOINTS.TASKS.REOPEN(taskId),
+      {}
+    );
+    return response.data;
+  },
+
+  // 8. Delete Task
+  deleteTask: async (taskId: string): Promise<void> => {
+    await api.delete(API_CONFIG.ENDPOINTS.TASKS.BY_ID(taskId));
   },
 };

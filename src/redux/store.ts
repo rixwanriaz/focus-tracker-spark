@@ -3,12 +3,16 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slice/authSlice";
 import projectReducer from "./slice/projectSlice";
 import organizationReducer from "./slice/organizationSlice";
+import taskReducer from "./slice/taskSlice";
+import timeReducer from "./slice/timeSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     project: projectReducer,
     organization: organizationReducer,
+    task: taskReducer,
+    time: timeReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
 });

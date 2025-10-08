@@ -8,6 +8,9 @@ import {
   NewProjectDialog,
   Project,
 } from '@/components/Projects';
+import { projectApiService, Project as ApiProject, CreateProjectRequest } from '@/redux/api';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 import { toast } from 'sonner';
 
 const Projects: React.FC = () => {
@@ -15,49 +18,80 @@ const Projects: React.FC = () => {
   const [showArchived, setShowArchived] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Load projects from localStorage on mount
+  // Get user info from Redux store
+  const { user } = useSelector((state: RootState) => ({
+    user: state.auth.user
+  }));
+
+  // Load projects from API
   useEffect(() => {
-    const savedProjects = localStorage.getItem('focus-tracker-projects');
-    if (savedProjects) {
+    const loadProjects = async () => {
       try {
-        setProjects(JSON.parse(savedProjects));
-      } catch (error) {
-        console.error('Error loading projects:', error);
+        setLoading(true);
+        setError(null);
+        
+        const apiProjects = await projectApiService.getProjects(
+          showArchived ? undefined : 'active',
+          searchQuery || undefined
+        );
+        
+        // Convert API projects to display format
+        const displayProjects = apiProjects.map(project => ({
+          id: project.id,
+          name: project.name,
+          client: undefined, // Client info will be handled by backend
+          timeframe: project.end_date ? new Date(project.end_date).toLocaleDateString() : undefined,
+          timeStatus: 0, // TODO: Get from time tracking API
+          billableStatus: 'billable' as const, // TODO: Determine from project settings
+          team: [], // TODO: Get from project members API
+          pinned: false, // TODO: Add to API response
+          archived: !project.is_active,
+          color: '#8b5cf6', // TODO: Add to API response
+        }));
+        
+        setProjects(displayProjects);
+      } catch (err) {
+        console.error('Error loading projects:', err);
+        setError('Failed to load projects');
+        toast.error('Failed to load projects');
+      } finally {
+        setLoading(false);
       }
-    } else {
-      // Initialize with sample project
-      const sampleProjects: Project[] = [
-        {
-          id: '1',
-          name: 'Testing',
-          timeframe: 'Oct 3',
-          timeStatus: 0,
-          pinned: false,
-          archived: false,
-          color: '#8b5cf6',
-        },
-      ];
-      setProjects(sampleProjects);
-      localStorage.setItem('focus-tracker-projects', JSON.stringify(sampleProjects));
-    }
-  }, []);
-
-  // Save projects to localStorage whenever they change
-  useEffect(() => {
-    if (projects.length > 0) {
-      localStorage.setItem('focus-tracker-projects', JSON.stringify(projects));
-    }
-  }, [projects]);
-
-  const handleCreateProject = (projectData: Omit<Project, 'id'>) => {
-    const newProject: Project = {
-      ...projectData,
-      id: Date.now().toString(),
     };
 
-    setProjects([...projects, newProject]);
-    toast.success(`Project "${newProject.name}" created successfully!`);
+    loadProjects();
+  }, [showArchived, searchQuery]);
+
+  const handleCreateProject = async (projectData: CreateProjectRequest) => {
+    try {
+      const newApiProject = await projectApiService.createProject(
+        projectData
+      );
+
+      // Convert API project to display format
+      const newDisplayProject: Project = {
+        id: newApiProject.id,
+        name: newApiProject.name,
+        client: undefined, // Client info will be handled by backend
+        timeframe: newApiProject.end_date ? new Date(newApiProject.end_date).toLocaleDateString() : undefined,
+        timeStatus: 0,
+        billableStatus: 'billable',
+        team: [],
+        pinned: false,
+        archived: !newApiProject.is_active,
+        color: '#8b5cf6',
+      };
+
+      setProjects(prev => [newDisplayProject, ...prev]);
+      toast.success(`Project "${newApiProject.name}" created successfully!`);
+    } catch (err) {
+      console.error('Error creating project:', err);
+      toast.error('Failed to create project');
+    }
   };
 
   const handleProjectSelect = (projectId: string) => {
@@ -87,6 +121,29 @@ const Projects: React.FC = () => {
     }
   };
 
+  const handleArchiveProject = async (projectId: string) => {
+    try {
+      await projectApiService.archiveProject(projectId);
+      
+      // Update local state
+      setProjects((prev) =>
+        prev.map((project) =>
+          project.id === projectId
+            ? { ...project, archived: true }
+            : project
+        )
+      );
+      
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        toast.success(`"${project.name}" archived successfully`);
+      }
+    } catch (err) {
+      console.error('Error archiving project:', err);
+      toast.error('Failed to archive project');
+    }
+  };
+
   const filteredProjects = projects.filter((project) =>
     showArchived ? true : !project.archived
   );
@@ -110,16 +167,29 @@ const Projects: React.FC = () => {
         <ProjectFilters
           showArchived={showArchived}
           onShowArchivedChange={setShowArchived}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
 
         {/* Projects Table */}
         <div className="p-6">
-          <ProjectsTable
-            projects={filteredProjects}
-            selectedProjects={selectedProjects}
-            onProjectSelect={handleProjectSelect}
-            onProjectPin={handleProjectPin}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-400">Loading projects...</div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-red-400">{error}</div>
+            </div>
+          ) : (
+            <ProjectsTable
+              projects={filteredProjects}
+              selectedProjects={selectedProjects}
+              onProjectSelect={handleProjectSelect}
+              onProjectPin={handleProjectPin}
+              onArchiveProject={handleArchiveProject}
+            />
+          )}
         </div>
 
         {/* New Project Dialog */}

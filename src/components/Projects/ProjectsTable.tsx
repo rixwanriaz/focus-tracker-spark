@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ArrowUpDown, Pin } from "lucide-react";
+import { ArrowUpDown, Pin, Archive } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,7 @@ export interface Project {
 export const adaptApiProjectToDisplay = (apiProject: ApiProject): Project => ({
   id: apiProject.id,
   name: apiProject.name,
-  client: apiProject.client_id, // This would need to be resolved from client API
+  client: undefined, // Client info will be handled by backend
   timeframe: apiProject.end_date ? new Date(apiProject.end_date).toLocaleDateString() : undefined,
   timeStatus: 0, // This would come from time tracking API
   billableStatus: 'billable', // This would be determined by project settings
@@ -37,6 +38,7 @@ interface ProjectsTableProps {
   projects: Project[];
   onProjectSelect?: (projectId: string) => void;
   onProjectPin?: (projectId: string) => void;
+  onArchiveProject?: (projectId: string) => void;
   selectedProjects?: string[];
 }
 
@@ -47,10 +49,12 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
   projects,
   onProjectSelect,
   onProjectPin,
+  onArchiveProject,
   selectedProjects = [],
 }) => {
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const navigate = useNavigate();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -127,7 +131,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
         </div>
 
         <div className="col-span-1 flex items-center">TIME STATUS</div>
-        <div className="col-span-2 flex items-center">BILLABLE STATUS</div>
+        <div className="col-span-1 flex items-center">BILLABLE STATUS</div>
         <div className="col-span-1 flex items-center">TEAM</div>
 
         <div className="col-span-1 flex items-center gap-2">
@@ -139,6 +143,8 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
             <ArrowUpDown className="h-3 w-3" />
           </button>
         </div>
+
+        <div className="col-span-1 flex items-center">ACTIONS</div>
       </div>
 
       {/* Table Body */}
@@ -169,7 +175,10 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                   className="w-2 h-2 rounded-full"
                   style={{ backgroundColor: project.color || "#8b5cf6" }}
                 />
-                <span className="text-sm text-purple-400 font-medium hover:text-purple-300 cursor-pointer">
+                <span 
+                  className="text-sm text-purple-400 font-medium hover:text-purple-300 cursor-pointer"
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                >
                   {project.name}
                 </span>
               </div>
@@ -186,7 +195,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                 {formatTimeStatus(project.timeStatus)}
               </div>
 
-              <div className="col-span-2 flex items-center text-sm text-gray-400">
+              <div className="col-span-1 flex items-center text-sm text-gray-400">
                 {project.billableStatus ? (
                   <span
                     className={cn(
@@ -241,6 +250,20 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                     className={cn("h-4 w-4", project.pinned && "fill-current")}
                   />
                 </Button>
+              </div>
+
+              <div className="col-span-1 flex items-center gap-1">
+                {!project.archived && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-600 hover:text-orange-400"
+                    onClick={() => onArchiveProject?.(project.id)}
+                    title="Archive project"
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           ))
