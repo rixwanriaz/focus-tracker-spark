@@ -21,10 +21,10 @@ const taskStatusConfig = {
 
 // Task priority configuration
 const taskPriorityConfig = {
-  low: { label: "Low", color: "bg-gray-100 text-gray-800" },
-  medium: { label: "Medium", color: "bg-yellow-100 text-yellow-800" },
-  high: { label: "High", color: "bg-orange-100 text-orange-800" },
-  urgent: { label: "Urgent", color: "bg-red-100 text-red-800" },
+  low: { label: "Low", color: "bg-gray-500/20 text-gray-300 border-gray-500/30", dot: "bg-gray-400" },
+  medium: { label: "Medium", color: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30", dot: "bg-yellow-400" },
+  high: { label: "High", color: "bg-orange-500/20 text-orange-300 border-orange-500/30", dot: "bg-orange-400" },
+  urgent: { label: "Urgent", color: "bg-red-500/20 text-red-300 border-red-500/30", dot: "bg-red-400" },
 };
 
 export interface TaskItemProps {
@@ -91,11 +91,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
   return (
     <Card className={cn(
-      "transition-all duration-200 hover:shadow-md",
+      "transition-all duration-300 hover:shadow-lg bg-gradient-to-r from-gray-800/50 to-gray-700/50 border-gray-600/50 hover:border-purple-500/30 group",
       task.status === "completed" && "opacity-75",
-      isOverdue && "border-red-200 bg-red-50"
+      isOverdue && "border-red-500/50 bg-gradient-to-r from-red-900/30 to-red-800/20"
     )}>
-      <CardContent className="p-4">
+      <CardContent className="p-5">
         <div className="flex items-start gap-3">
           {/* Status Dropdown */}
           <div className="flex-shrink-0 pt-1">
@@ -103,20 +103,20 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               value={task.status}
               onValueChange={(value: TaskStatus) => onStatusChange?.(task.id, value)}
             >
-              <SelectTrigger className="w-32 h-6 text-xs">
-                <div className="flex items-center gap-1">
-                  <StatusIcon className={cn("h-3 w-3", taskStatusConfig[task.status].color)} />
-                  <span>{taskStatusConfig[task.status].label}</span>
+              <SelectTrigger className="w-36 h-8 text-xs bg-gray-700/50 border-gray-600/50 text-gray-300 hover:bg-gray-700 hover:border-purple-500/50 transition-all duration-200">
+                <div className="flex items-center gap-2">
+                  <StatusIcon className={cn("h-4 w-4", taskStatusConfig[task.status].color)} />
+                  <span className="font-medium">{taskStatusConfig[task.status].label}</span>
                 </div>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-800 border-gray-700 shadow-xl">
                 {Object.entries(taskStatusConfig).map(([value, config]) => {
                   const IconComponent = config.icon;
                   return (
-                    <SelectItem key={value} value={value}>
-                      <div className="flex items-center gap-2">
-                        <IconComponent className={cn("h-3 w-3", config.color)} />
-                        <span>{config.label}</span>
+                    <SelectItem key={value} value={value} className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700">
+                      <div className="flex items-center gap-3">
+                        <IconComponent className={cn("h-4 w-4", config.color)} />
+                        <span className="font-medium">{config.label}</span>
                       </div>
                     </SelectItem>
                   );
@@ -128,31 +128,35 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           {/* Task Content */}
           <div className="flex-1 min-w-0">
             {isEditing ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Input
                   value={editData.title}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="font-medium"
+                  className="font-semibold bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400 focus:bg-gray-700 focus:border-purple-500/50 transition-all duration-200"
                   placeholder="Task title"
                 />
                 <Textarea
                   value={editData.description}
                   onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                   placeholder="Task description"
-                  rows={2}
+                  rows={3}
+                  className="bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400 focus:bg-gray-700 focus:border-purple-500/50 transition-all duration-200"
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Select
                     value={editData.priority}
                     onValueChange={(value: TaskPriority) => setEditData({ ...editData, priority: value })}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-36 bg-gray-700/50 border-gray-600/50 text-gray-300 hover:bg-gray-700 hover:border-purple-500/50 transition-all duration-200">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-gray-800 border-gray-700 shadow-xl">
                       {Object.entries(taskPriorityConfig).map(([value, config]) => (
-                        <SelectItem key={value} value={value}>
-                          {config.label}
+                        <SelectItem key={value} value={value} className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${config.dot}`}></div>
+                            {config.label}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -161,14 +165,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                     type="date"
                     value={editData.due_date}
                     onChange={(e) => setEditData({ ...editData, due_date: e.target.value })}
-                    className="w-40"
+                    className="w-44 bg-gray-700/50 border-gray-600/50 text-white focus:bg-gray-700 focus:border-purple-500/50 transition-all duration-200"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSave}>
+                <div className="flex gap-3 pt-2">
+                  <Button size="sm" onClick={handleSave} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200">
                     Save
                   </Button>
-                  <Button size="sm" variant="outline" onClick={handleCancel}>
+                  <Button size="sm" variant="outline" onClick={handleCancel} className="border-gray-600/50 text-gray-300 hover:bg-gray-700 hover:border-gray-500 transition-all duration-200">
                     Cancel
                   </Button>
                 </div>
@@ -178,58 +182,59 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <h3 className={cn(
-                      "font-medium text-gray-900",
+                      "font-semibold text-white text-lg group-hover:text-purple-300 transition-colors",
                       task.status === "completed" && "line-through text-gray-500"
                     )}>
                       {task.title}
                     </h3>
                     {task.description && (
-                      <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                      <p className="text-sm text-gray-400 mt-2 leading-relaxed">{task.description}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <Badge className={cn("text-xs", PriorityBadge.color)}>
+                  <div className="flex items-center gap-3 ml-4">
+                    <Badge className={cn("text-xs font-medium px-3 py-1 rounded-full border", PriorityBadge.color)}>
+                      <div className={`w-2 h-2 rounded-full mr-2 ${PriorityBadge.dot}`}></div>
                       {PriorityBadge.label}
                     </Badge>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsEditing(true)}
-                      className="h-6 w-6 p-0"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 opacity-0 group-hover:opacity-100 transition-all duration-200"
                     >
-                      <AlertCircle className="h-3 w-3" />
+                      <AlertCircle className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
 
                 {/* Task Meta */}
-                <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <StatusIcon className={cn("h-3 w-3", taskStatusConfig[task.status].color)} />
-                    <span>{taskStatusConfig[task.status].label}</span>
+                <div className="flex items-center gap-6 mt-4 text-xs text-gray-400">
+                  <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full">
+                    <StatusIcon className={cn("h-4 w-4", taskStatusConfig[task.status].color)} />
+                    <span className="font-medium">{taskStatusConfig[task.status].label}</span>
                   </div>
                   
                   {task.assignee && (
-                    <div className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      <span>{task.assignee.first_name} {task.assignee.last_name}</span>
+                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full">
+                      <User className="h-4 w-4 text-blue-400" />
+                      <span className="font-medium">{task.assignee.first_name} {task.assignee.last_name}</span>
                     </div>
                   )}
                   
                   {task.estimate_seconds && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{formatEstimate(task.estimate_seconds)}</span>
+                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full">
+                      <Clock className="h-4 w-4 text-purple-400" />
+                      <span className="font-medium">{formatEstimate(task.estimate_seconds)}</span>
                     </div>
                   )}
                   
                   {task.due_date && (
                     <div className={cn(
-                      "flex items-center gap-1",
-                      isOverdue && "text-red-600 font-medium"
+                      "flex items-center gap-2 px-3 py-1.5 rounded-full",
+                      isOverdue ? "bg-red-500/20 text-red-300" : "bg-gray-800/50"
                     )}>
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(task.due_date)}</span>
+                      <Calendar className={cn("h-4 w-4", isOverdue ? "text-red-400" : "text-orange-400")} />
+                      <span className="font-medium">{formatDate(task.due_date)}</span>
                     </div>
                   )}
                 </div>
@@ -261,9 +266,14 @@ export const TaskList: React.FC<TaskListProps> = ({
 }) => {
   if (tasks.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <Circle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-        <p>{emptyMessage}</p>
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="p-4 bg-gray-800/50 rounded-full mb-6">
+          <Circle className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-2">No tasks yet</h3>
+        <p className="text-gray-400 text-sm text-center max-w-md">
+          {emptyMessage}
+        </p>
       </div>
     );
   }
@@ -326,50 +336,59 @@ export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
           <Plus className="mr-2 h-4 w-4" />
           New Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 text-white shadow-2xl sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+            <Plus className="h-5 w-5 text-purple-400" />
+            Create New Task
+          </DialogTitle>
+          <p className="text-gray-400 text-sm">Add a new task to your project</p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="text-sm font-medium text-gray-700">Title *</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">Title *</label>
             <Input
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Enter task title"
               required
+              className="bg-gray-800/50 border-gray-700 text-white placeholder-gray-500 focus:bg-gray-800 focus:border-purple-500/50 transition-all duration-200"
             />
           </div>
           
           <div>
-            <label className="text-sm font-medium text-gray-700">Description</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">Description</label>
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter task description"
               rows={3}
+              className="bg-gray-800/50 border-gray-700 text-white placeholder-gray-500 focus:bg-gray-800 focus:border-purple-500/50 transition-all duration-200"
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Priority</label>
+              <label className="text-sm font-medium text-gray-300 mb-2 block">Priority</label>
               <Select
                 value={formData.priority}
                 onValueChange={(value: TaskPriority) => setFormData({ ...formData, priority: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-purple-500/50 transition-all duration-200">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-800 border-gray-700 shadow-xl">
                   {Object.entries(taskPriorityConfig).map(([value, config]) => (
-                    <SelectItem key={value} value={value}>
-                      {config.label}
+                    <SelectItem key={value} value={value} className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${config.dot}`}></div>
+                        {config.label}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -377,30 +396,39 @@ export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
             </div>
             
             <div>
-              <label className="text-sm font-medium text-gray-700">Due Date</label>
+              <label className="text-sm font-medium text-gray-300 mb-2 block">Due Date</label>
               <Input
                 type="date"
                 value={formData.due_date}
                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                className="bg-gray-800/50 border-gray-700 text-white focus:bg-gray-800 focus:border-purple-500/50 transition-all duration-200"
               />
             </div>
           </div>
           
           {assignees.length > 0 && (
             <div>
-              <label className="text-sm font-medium text-gray-700">Assignee</label>
+              <label className="text-sm font-medium text-gray-300 mb-2 block">Assignee</label>
               <Select
                 value={formData.assignee_id || "unassigned"}
                 onValueChange={(value) => setFormData({ ...formData, assignee_id: value === "unassigned" ? undefined : value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-purple-500/50 transition-all duration-200">
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectContent className="bg-gray-800 border-gray-700 shadow-xl">
+                  <SelectItem value="unassigned" className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                      Unassigned
+                    </div>
+                  </SelectItem>
                   {assignees.map((assignee) => (
-                    <SelectItem key={assignee.id} value={assignee.id}>
-                      {assignee.first_name} {assignee.last_name}
+                    <SelectItem key={assignee.id} value={assignee.id} className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                        {assignee.first_name} {assignee.last_name}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -408,11 +436,11 @@ export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
             </div>
           )}
           
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-gray-600/50 text-gray-300 hover:bg-gray-700 hover:border-gray-500 transition-all duration-200">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !formData.title.trim()}>
+            <Button type="submit" disabled={loading || !formData.title.trim()} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200">
               {loading ? "Creating..." : "Create Task"}
             </Button>
           </div>

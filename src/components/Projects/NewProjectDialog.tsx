@@ -16,9 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Eye, ChevronDown, ChevronUp, DollarSign, Info } from 'lucide-react';
+import { Eye, ChevronDown, ChevronUp, DollarSign, Info, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CreateProjectRequest } from '@/redux/api';
+import { 
+  projectValidationSchema,
+  formatValidationErrors,
+  defaultProjectFormData,
+  projectColors,
+  type ProjectFormData,
+  type ProjectValidationError 
+} from '@/validation/project';
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -26,74 +34,86 @@ interface NewProjectDialogProps {
   onCreateProject: (project: CreateProjectRequest) => void;
 }
 
-const projectColors = [
-  '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
-  '#14b8a6', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899'
-];
-
 export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   open,
   onOpenChange,
   onCreateProject,
 }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    budget_amount: 0,
-    budget_currency: 'USD',
-    project_manager_id: '',
+  const [formData, setFormData] = useState<Partial<ProjectFormData>>({
+    ...defaultProjectFormData,
     color: projectColors[0],
-    privacy: 'private',
-    inviteMembers: '',
-    access: 'regular',
-    billable: true,
-    hourlyRateType: 'default',
-    customRate: '',
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ProjectValidationError[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Reset form when dialog is closed
+  React.useEffect(() => {
+    if (!open) {
+      setFormData({
+        ...defaultProjectFormData,
+        color: projectColors[0],
+      });
+      setShowAdvanced(false);
+      setShowColorPicker(false);
+      setValidationErrors([]);
+      setIsSubmitting(false);
+    }
+  }, [open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name.trim()) return;
+    setIsSubmitting(true);
+    setValidationErrors([]);
 
-    // Create project data for API
-    const projectData: CreateProjectRequest = {
-      name: formData.name,
-      description: formData.description,
-      start_date: formData.start_date || new Date().toISOString().split('T')[0],
-      end_date: formData.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
-      budget_amount: formData.budget_amount,
-      budget_currency: formData.budget_currency,
-      project_manager_id: formData.project_manager_id || '7e7d7a2c-c09f-4e6f-b682-ca3ca920e522', // Default manager ID
-    };
+    try {
+      // Validate form data using Yup
+      await projectValidationSchema.validate(formData, { abortEarly: false });
 
-    onCreateProject(projectData);
+      // Create project data for API
+      const projectData: CreateProjectRequest = {
+        name: formData.name || '',
+        description: formData.description || undefined,
+        start_date: formData.start_date 
+          ? new Date(formData.start_date).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        end_date: formData.end_date 
+          ? new Date(formData.end_date).toISOString().split('T')[0]
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        budget_amount: formData.budget_amount || 0,
+        budget_currency: formData.budget_currency || 'USD',
+        project_manager_id: formData.project_manager_id || '7e7d7a2c-c09f-4e6f-b682-ca3ca920e522',
+      };
 
-    // Reset form
-    setFormData({
-      name: '',
-      description: '',
-      start_date: '',
-      end_date: '',
-      budget_amount: 0,
-      budget_currency: 'USD',
-      project_manager_id: '',
-      color: projectColors[0],
-      privacy: 'private',
-      inviteMembers: '',
-      access: 'regular',
-      billable: true,
-      hourlyRateType: 'default',
-      customRate: '',
-    });
-    setShowAdvanced(false);
+      await onCreateProject(projectData);
 
-    onOpenChange(false);
+      // Reset form on success
+      setFormData({
+        ...defaultProjectFormData,
+        color: projectColors[0],
+      });
+      setShowAdvanced(false);
+      setValidationErrors([]);
+
+      onOpenChange(false);
+    } catch (error) {
+      if (error instanceof Error && 'inner' in error) {
+        // Yup validation error
+        const errors = formatValidationErrors(error as any);
+        setValidationErrors(errors);
+      } else {
+        console.error('Error creating project:', error);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper function to get error message for a field
+  const getFieldError = (fieldName: string): string | undefined => {
+    return validationErrors.find(error => error.field === fieldName)?.message;
   };
 
   return (
@@ -104,6 +124,21 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-0">
+          {/* Global Error Display */}
+          {validationErrors.length > 0 && (
+            <div className="mx-6 mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+              <div className="flex items-center gap-2 text-red-400 text-sm font-medium mb-2">
+                <AlertCircle className="h-4 w-4" />
+                Please fix the following errors:
+              </div>
+              <ul className="text-red-300 text-sm space-y-1">
+                {validationErrors.map((error, index) => (
+                  <li key={index}>• {error.message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="px-6 pb-4 space-y-4">
             {/* Project Name with Color */}
             <div className="flex items-center gap-3 bg-gray-800 rounded-lg px-4 py-3 mt-4">
@@ -123,7 +158,7 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                           key={color}
                           type="button"
                           onClick={() => {
-                            setFormData({ ...formData, color });
+                            setFormData({ ...formData, color: color as any });
                             setShowColorPicker(false);
                           }}
                           className={cn(
@@ -139,13 +174,21 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
               </div>
 
               {/* Project Name Input */}
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Project name"
-                className="flex-1 bg-transparent border-0 text-white placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-auto"
-                required
-              />
+              <div className="flex-1">
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Project name"
+                  className={cn(
+                    "bg-transparent border-0 text-white placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-auto",
+                    getFieldError('name') && "text-red-400"
+                  )}
+                  required
+                />
+                {getFieldError('name') && (
+                  <p className="text-red-400 text-xs mt-1">{getFieldError('name')}</p>
+                )}
+              </div>
             </div>
 
             {/* Project Description */}
@@ -154,11 +197,17 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 Description
               </Label>
               <Input
-                value={formData.description}
+                value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Project description"
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+                className={cn(
+                  "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500",
+                  getFieldError('description') && "border-red-500"
+                )}
               />
+              {getFieldError('description') && (
+                <p className="text-red-400 text-xs">{getFieldError('description')}</p>
+              )}
             </div>
 
             {/* Project Dates */}
@@ -169,10 +218,16 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 </Label>
                 <Input
                   type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="bg-gray-800 border-gray-700 text-white"
+                  value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ''}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value ? new Date(e.target.value) : undefined })}
+                  className={cn(
+                    "bg-gray-800 border-gray-700 text-white",
+                    getFieldError('start_date') && "border-red-500"
+                  )}
                 />
+                {getFieldError('start_date') && (
+                  <p className="text-red-400 text-xs">{getFieldError('start_date')}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -180,10 +235,16 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 </Label>
                 <Input
                   type="date"
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="bg-gray-800 border-gray-700 text-white"
+                  value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ''}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value ? new Date(e.target.value) : undefined })}
+                  className={cn(
+                    "bg-gray-800 border-gray-700 text-white",
+                    getFieldError('end_date') && "border-red-500"
+                  )}
                 />
+                {getFieldError('end_date') && (
+                  <p className="text-red-400 text-xs">{getFieldError('end_date')}</p>
+                )}
               </div>
             </div>
 
@@ -195,18 +256,27 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 </Label>
                 <Input
                   type="number"
-                  value={formData.budget_amount}
-                  onChange={(e) => setFormData({ ...formData, budget_amount: Number(e.target.value) })}
+                  value={formData.budget_amount || ''}
+                  onChange={(e) => setFormData({ ...formData, budget_amount: Number(e.target.value) || 0 })}
                   placeholder="0"
-                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+                  className={cn(
+                    "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500",
+                    getFieldError('budget_amount') && "border-red-500"
+                  )}
                 />
+                {getFieldError('budget_amount') && (
+                  <p className="text-red-400 text-xs">{getFieldError('budget_amount')}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Currency
                 </Label>
-                <Select value={formData.budget_currency} onValueChange={(value) => setFormData({ ...formData, budget_currency: value })}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                <Select value={formData.budget_currency} onValueChange={(value) => setFormData({ ...formData, budget_currency: value as any })}>
+                  <SelectTrigger className={cn(
+                    "bg-gray-800 border-gray-700 text-white",
+                    getFieldError('budget_currency') && "border-red-500"
+                  )}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-gray-700">
@@ -215,6 +285,9 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                     <SelectItem value="GBP" className="text-gray-300">GBP</SelectItem>
                   </SelectContent>
                 </Select>
+                {getFieldError('budget_currency') && (
+                  <p className="text-red-400 text-xs">{getFieldError('budget_currency')}</p>
+                )}
               </div>
             </div>
 
@@ -240,7 +313,7 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Invite Members
                 </Label>
-                <Select value={formData.inviteMembers} onValueChange={(value) => setFormData({ ...formData, inviteMembers: value })}>
+                <Select value={formData.inviteMembers || ''} onValueChange={(value) => setFormData({ ...formData, inviteMembers: value })}>
                   <SelectTrigger className="bg-gray-900 border-gray-700 text-gray-400 h-10">
                     <SelectValue placeholder="Select Team Member or Group" />
                   </SelectTrigger>
@@ -260,7 +333,7 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                   </Label>
                   <Info className="w-3 h-3 text-gray-500" />
                 </div>
-                <Select value={formData.access} onValueChange={(value) => setFormData({ ...formData, access: value })}>
+                <Select value={formData.access} onValueChange={(value) => setFormData({ ...formData, access: value as any })}>
                   <SelectTrigger className="bg-gray-900 border-gray-700 text-gray-300 h-10">
                     <SelectValue placeholder="Regular member" />
                   </SelectTrigger>
@@ -295,7 +368,7 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Hourly Rate
                 </Label>
-                <RadioGroup value={formData.hourlyRateType} onValueChange={(value) => setFormData({ ...formData, hourlyRateType: value })}>
+                <RadioGroup value={formData.hourlyRateType} onValueChange={(value) => setFormData({ ...formData, hourlyRateType: value as any })}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="default" id="default" className="border-gray-600 text-purple-500" />
                     <Label htmlFor="default" className="text-sm text-gray-300 cursor-pointer flex items-center gap-1">
@@ -337,9 +410,10 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
           <div className="px-6 pb-6 pt-2">
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium py-6 text-sm rounded-lg"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-medium py-6 text-sm rounded-lg transition-all duration-200"
             >
-              Create project
+              {isSubmitting ? 'Creating project...' : 'Create project'}
             </Button>
           </div>
         </form>

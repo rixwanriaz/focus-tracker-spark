@@ -150,6 +150,7 @@ const authSlice = createSlice({
       state.refreshToken = null;
       state.isAuthenticated = false;
       state.expiresIn = null;
+      state.user = undefined;
       state.loading = false;
       state.error = null;
 
@@ -186,6 +187,7 @@ const authSlice = createSlice({
           state.tokenType = action.payload.token_type;
           state.expiresIn = action.payload.expires_in;
           state.isAuthenticated = true;
+          state.user = action.payload.user;
           state.error = null;
 
           // Persist to localStorage
@@ -213,6 +215,7 @@ const authSlice = createSlice({
           state.tokenType = action.payload.token_type;
           state.expiresIn = action.payload.expires_in;
           state.isAuthenticated = true;
+          state.user = action.payload.user;
           state.error = null;
 
           // Persist to localStorage
@@ -239,6 +242,7 @@ const authSlice = createSlice({
           state.refreshToken = action.payload.refresh_token;
           state.tokenType = action.payload.token_type;
           state.expiresIn = action.payload.expires_in;
+          state.user = action.payload.user;
           state.error = null;
 
           // Persist to localStorage
@@ -269,6 +273,7 @@ const authSlice = createSlice({
         state.refreshToken = null;
         state.isAuthenticated = false;
         state.expiresIn = null;
+        state.user = undefined;
         state.error = null;
 
         // Clear from localStorage
@@ -284,6 +289,7 @@ const authSlice = createSlice({
         state.refreshToken = null;
         state.isAuthenticated = false;
         state.expiresIn = null;
+        state.user = undefined;
 
         // Clear from localStorage
         localStorage.removeItem("access_token");

@@ -3,28 +3,33 @@ import {
   organizationApiService,
   CreateOrganizationRequest,
   Organization,
+  OrganizationMember,
 } from "../api/organization";
 
 // Organization state interface
 interface OrganizationState {
   currentOrganization: Organization | null;
   organizations: Organization[];
+  members: OrganizationMember[];
   loading: boolean;
   error: string | null;
   creating: boolean;
   updating: boolean;
   deleting: boolean;
+  loadingMembers: boolean;
 }
 
 // Initial state
 const initialState: OrganizationState = {
   currentOrganization: null,
   organizations: [],
+  members: [],
   loading: false,
   error: null,
   creating: false,
   updating: false,
   deleting: false,
+  loadingMembers: false,
 };
 
 // Async thunks for organization operations
@@ -100,6 +105,23 @@ export const deleteOrganization = createAsyncThunk<
       error?.response?.data?.detail ||
       error?.message ||
       "Failed to delete organization";
+    return rejectWithValue(errorMessage);
+  }
+});
+
+export const getOrganizationMembers = createAsyncThunk<
+  OrganizationMember[],
+  string,
+  { rejectValue: string }
+>("organization/getMembers", async (orgId, { rejectWithValue }) => {
+  try {
+    const response = await organizationApiService.getOrganizationMembers(orgId);
+    return response.members;
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.detail ||
+      error?.message ||
+      "Failed to get organization members";
     return rejectWithValue(errorMessage);
   }
 });
@@ -215,6 +237,24 @@ const organizationSlice = createSlice({
       .addCase(deleteOrganization.rejected, (state, action) => {
         state.deleting = false;
         state.error = action.payload || "Failed to delete organization";
+      })
+
+      // Get Organization Members
+      .addCase(getOrganizationMembers.pending, (state) => {
+        state.loadingMembers = true;
+        state.error = null;
+      })
+      .addCase(
+        getOrganizationMembers.fulfilled,
+        (state, action: PayloadAction<OrganizationMember[]>) => {
+          state.loadingMembers = false;
+          state.members = action.payload;
+          state.error = null;
+        }
+      )
+      .addCase(getOrganizationMembers.rejected, (state, action) => {
+        state.loadingMembers = false;
+        state.error = action.payload || "Failed to get organization members";
       });
   },
 });

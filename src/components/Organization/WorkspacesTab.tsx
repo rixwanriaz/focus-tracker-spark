@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Folder, Users, UserCheck, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { RootState, AppDispatch } from '@/redux/store';
+import { getOrganizationMembers } from '@/redux/slice/organizationSlice';
 
 interface Workspace {
   id: string;
@@ -12,16 +15,49 @@ interface Workspace {
 }
 
 const WorkspacesTab: React.FC = () => {
-  // Mock data - this would come from API
-  const workspaces: Workspace[] = [
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Get data from Redux store
+  const { currentOrganization, members, loadingMembers } = useSelector(
+    (state: RootState) => state.organization
+  );
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  // Load organization members when component mounts
+  useEffect(() => {
+    if (currentOrganization?.slug) {
+      dispatch(getOrganizationMembers(currentOrganization.slug));
+    }
+  }, [dispatch, currentOrganization?.slug]);
+
+  // Get current user's name
+  const getCurrentUserName = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    } else if (user?.first_name) {
+      return user.first_name;
+    } else if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Current User';
+  };
+
+  // Get admin members (you can customize this logic based on your role system)
+  const getAdminMembers = () => {
+    const currentUserName = getCurrentUserName();
+    return [`${currentUserName} (you)`];
+  };
+
+  // Create workspace data from organization data
+  const workspaces: Workspace[] = currentOrganization ? [
     {
-      id: '1',
-      name: 'Workspace',
-      admins: ['Rixwan Riaz123 (you)'],
-      members: 1,
-      groups: 0,
+      id: currentOrganization.slug,
+      name: currentOrganization.name,
+      admins: getAdminMembers(),
+      members: members.length,
+      groups: 0, // You can add groups logic later
     },
-  ];
+  ] : [];
 
   return (
     <div className="space-y-6">
@@ -47,29 +83,41 @@ const WorkspacesTab: React.FC = () => {
 
             {/* Table Body */}
             <div className="divide-y divide-gray-800">
-              {workspaces.map((workspace) => (
-                <div key={workspace.id} className="grid grid-cols-3 gap-4 px-6 py-4 hover:bg-gray-800/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                      <Folder className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-white font-medium">{workspace.name}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-gray-300">
-                    {workspace.admins.map((admin, index) => (
-                      <span key={index}>
-                        {admin}
-                        {index < workspace.admins.length - 1 && ', '}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-gray-300">
-                    {workspace.members} member{workspace.members !== 1 ? 's' : ''}, {workspace.groups} group{workspace.groups !== 1 ? 's' : ''}
-                  </div>
+              {loadingMembers ? (
+                <div className="px-6 py-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading organization data...</p>
                 </div>
-              ))}
+              ) : workspaces.length > 0 ? (
+                workspaces.map((workspace) => (
+                  <div key={workspace.id} className="grid grid-cols-3 gap-4 px-6 py-4 hover:bg-gray-800/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <Folder className="h-4 w-4 text-white" />
+                      </div>
+                      <span className="text-white font-medium">{workspace.name}</span>
+                    </div>
+                    
+                    <div className="flex items-center text-sm text-gray-300">
+                      {workspace.admins.map((admin, index) => (
+                        <span key={index}>
+                          {admin}
+                          {index < workspace.admins.length - 1 && ', '}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center text-sm text-gray-300">
+                      {workspace.members} member{workspace.members !== 1 ? 's' : ''}, {workspace.groups} group{workspace.groups !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-6 py-8 text-center">
+                  <Folder className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+                  <p className="text-gray-400">No organization data available</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
+import { getOrgIdFromToken } from '@/lib/jwt';
+import { getOrganization } from '@/redux/slice/organizationSlice';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -51,6 +55,44 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Get user and organization data from Redux
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { currentOrganization } = useSelector((state: RootState) => state.organization);
+
+  // Fetch organization details on mount using org ID from token
+  useEffect(() => {
+    const orgId = getOrgIdFromToken();
+    if (orgId && !currentOrganization) {
+      dispatch(getOrganization(orgId));
+    }
+  }, [dispatch, currentOrganization]);
+
+  // Helper function to get user initials
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    const firstInitial = user.first_name?.charAt(0)?.toUpperCase() || '';
+    const lastInitial = user.last_name?.charAt(0)?.toUpperCase() || '';
+    return firstInitial + lastInitial || user.email?.charAt(0)?.toUpperCase() || 'U';
+  };
+
+  // Helper function to get user display name
+  const getUserDisplayName = () => {
+    if (!user) return 'User';
+    if (user.first_name || user.last_name) {
+      return `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    }
+    return user.email || 'User';
+  };
+
+  // Helper function to get organization display name (truncated)
+  const getOrganizationDisplayName = () => {
+    if (!currentOrganization?.name) return 'Workspace';
+    const orgName = currentOrganization.name.toUpperCase();
+    // Truncate if too long
+    return orgName.length > 20 ? orgName.substring(0, 17) + '...' : orgName;
+  };
 
   const sidebarItems = {
     track: [
@@ -109,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-white">Workspace</div>
-                <div className="text-xs text-gray-400 truncate">RIZWAN RIAZ123'S O...</div>
+                <div className="text-xs text-gray-400 truncate">{getOrganizationDisplayName()}</div>
               </div>
             )}
           </div>
@@ -203,9 +245,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
-              R
+              {getUserInitials()}
             </div>
-            {!isCollapsed && <span className="ml-3 text-sm font-medium text-gray-300">PROFILE</span>}
+            {!isCollapsed && <span className="ml-3 text-sm font-medium text-gray-300">{getUserDisplayName()}</span>}
           </div>
           {/* Only show collapse button when not on mobile (when onNavigate is not provided) */}
           {!onNavigate && (
