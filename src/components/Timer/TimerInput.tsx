@@ -125,7 +125,7 @@ export const TimerInput: React.FC<TimerInputProps> = ({
                     >
                       <FolderOpen className="h-4 w-4" />
                       {(!timerState.project_id || !timerState.task_id) && !timerState.isRunning && (
-                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />
+                        <span className="absolute [inset-block-start:-0.125rem] [inset-inline-end:-0.125rem] h-2 w-2 bg-red-500 rounded-full" />
                       )}
                     </Button>
                   </PopoverTrigger>

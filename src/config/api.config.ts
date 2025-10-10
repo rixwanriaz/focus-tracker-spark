@@ -55,9 +55,9 @@ export const API_CONFIG = {
       PAUSE_TIMER: "/time/timers/pause",
       RESUME_TIMER: "/time/timers/resume",
       STOP_TIMER: "/time/timers/stop",
-      ACTIVE_TIMER: "/time/active",
-      APPLY_IDLE_TRIM: (id: string) => `/time/${id}/idle-trim`,
-      BULK_ADJUST: "/time/bulk-adjust",
+      ACTIVE_TIMER: "/time/timers/active",
+      APPLY_IDLE_TRIM: "/time/timers/apply-idle-trim",
+      BULK_ADJUST: "/time/entries/bulk-adjust",
     },
     // Add more endpoints as needed
   },

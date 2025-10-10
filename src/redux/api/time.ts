@@ -110,6 +110,7 @@ export interface BulkAdjustRequest {
 }
 
 export interface ApplyIdleTrimRequest {
+  time_entry_id: string;
   trim_seconds: number;
 }
 
@@ -140,31 +141,29 @@ export const timeApiService = {
 
   // 3. Pause Timer
   pauseTimer: async (timeEntryId: string): Promise<TimeEntry> => {
-    const response = await api.post(
-      API_CONFIG.ENDPOINTS.TIME.PAUSE_TIMER,
-      { time_entry_id: timeEntryId }
-    );
+    const response = await api.post(API_CONFIG.ENDPOINTS.TIME.PAUSE_TIMER, {
+      time_entry_id: timeEntryId,
+    });
     return response.data;
   },
 
   // 4. Resume Timer
   resumeTimer: async (timeEntryId: string): Promise<TimeEntry> => {
-    const response = await api.post(
-      API_CONFIG.ENDPOINTS.TIME.RESUME_TIMER,
-      { time_entry_id: timeEntryId }
-    );
+    const response = await api.post(API_CONFIG.ENDPOINTS.TIME.RESUME_TIMER, {
+      time_entry_id: timeEntryId,
+    });
     return response.data;
   },
 
   // 5. Stop Timer
-  stopTimer: async (timeEntryId: string, data?: Omit<StopTimerRequest, 'time_entry_id'>): Promise<TimeEntry> => {
-    const response = await api.post(
-      API_CONFIG.ENDPOINTS.TIME.STOP_TIMER,
-      {
-        time_entry_id: timeEntryId,
-        ...data,
-      }
-    );
+  stopTimer: async (
+    timeEntryId: string,
+    data?: Omit<StopTimerRequest, "time_entry_id">
+  ): Promise<TimeEntry> => {
+    const response = await api.post(API_CONFIG.ENDPOINTS.TIME.STOP_TIMER, {
+      time_entry_id: timeEntryId,
+      ...data,
+    });
     return response.data;
   },
 
@@ -172,13 +171,10 @@ export const timeApiService = {
   createManualEntry: async (
     data: CreateManualEntryRequest
   ): Promise<TimeEntry> => {
-    const response = await api.post(
-      API_CONFIG.ENDPOINTS.TIME.ENTRIES,
-      {
-        ...data,
-        source: data.source || "manual",
-      }
-    );
+    const response = await api.post(API_CONFIG.ENDPOINTS.TIME.ENTRIES, {
+      ...data,
+      source: data.source || "manual",
+    });
     return response.data;
   },
 
@@ -197,9 +193,9 @@ export const timeApiService = {
     const response = await api.get(
       `${API_CONFIG.ENDPOINTS.TIME.ENTRIES}?${params.toString()}`
     );
-    
+
     const data = response.data;
-    
+
     // Handle different response formats from the backend
     if (Array.isArray(data)) {
       // If backend returns array directly
@@ -207,16 +203,16 @@ export const timeApiService = {
         entries: data,
         total: data.length,
       };
-    } else if (data && typeof data === 'object' && 'entries' in data) {
+    } else if (data && typeof data === "object" && "entries" in data) {
       // If backend returns { entries: [], total: number }
       return {
         entries: Array.isArray(data.entries) ? data.entries : [],
-        total: typeof data.total === 'number' ? data.total : 0,
+        total: typeof data.total === "number" ? data.total : 0,
       };
     }
-    
+
     // Fallback for unexpected response format
-    console.warn('Unexpected time entries response format:', data);
+    console.warn("Unexpected time entries response format:", data);
     return {
       entries: [],
       total: 0,
@@ -251,12 +247,12 @@ export const timeApiService = {
   // 11. Apply Idle Trim
   applyIdleTrim: async (
     entryId: string,
-    data: ApplyIdleTrimRequest
+    data: Omit<ApplyIdleTrimRequest, "time_entry_id">
   ): Promise<TimeEntry> => {
-    const response = await api.post(
-      API_CONFIG.ENDPOINTS.TIME.APPLY_IDLE_TRIM(entryId),
-      data
-    );
+    const response = await api.post(API_CONFIG.ENDPOINTS.TIME.APPLY_IDLE_TRIM, {
+      time_entry_id: entryId,
+      ...data,
+    });
     return response.data;
   },
 
@@ -269,4 +265,3 @@ export const timeApiService = {
     return response.data;
   },
 };
-

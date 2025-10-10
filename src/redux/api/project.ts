@@ -191,14 +191,11 @@ export const projectApiService = {
   },
 
   // 2. Get All Projects
-  getProjects: async (
-    status?: string,
-    search?: string
-  ): Promise<Project[]> => {
+  getProjects: async (status?: string, search?: string): Promise<Project[]> => {
     const params = new URLSearchParams();
-    if (status) params.append('status', status);
-    if (search) params.append('search', search);
-    
+    if (status) params.append("status", status);
+    if (search) params.append("search", search);
+
     const response = await api.get(
       `${API_CONFIG.ENDPOINTS.PROJECTS.BASE}?${params.toString()}`
     );
@@ -226,14 +223,8 @@ export const projectApiService = {
   },
 
   // 5. Archive Project (Soft Delete)
-  archiveProject: async (
-    projectId: string
-  ): Promise<Project> => {
-    const response = await api.patch(
-      `${API_CONFIG.ENDPOINTS.PROJECTS.BY_ID(projectId)}/archive`,
-      {}
-    );
-    return response.data;
+  archiveProject: async (projectId: string): Promise<void> => {
+    await api.delete(API_CONFIG.ENDPOINTS.PROJECTS.BY_ID(projectId));
   },
 
   // 6. Add Member to Project
@@ -299,7 +290,50 @@ export const projectApiService = {
     const response = await api.get(
       API_CONFIG.ENDPOINTS.PROJECTS.GANTT(projectId)
     );
-    return response.data;
+
+    // Transform the API response to match GanttChartData structure
+    const apiTasks = Array.isArray(response.data) ? response.data : [];
+    const today = new Date().toISOString().split("T")[0];
+
+    const transformedData: GanttChartData = {
+      project_id: projectId,
+      tasks: apiTasks
+        .filter((task: any) => task.start_date || task.end_date) // Include tasks with at least one date
+        .map((task: any) => {
+          // If start_date is missing, use end_date minus 7 days, or today
+          let startDate = task.start_date;
+          if (!startDate && task.end_date) {
+            const endDate = new Date(task.end_date);
+            endDate.setDate(endDate.getDate() - 7);
+            startDate = endDate.toISOString().split("T")[0];
+          } else if (!startDate) {
+            startDate = today;
+          }
+
+          // If end_date is missing, use start_date plus 7 days, or today
+          let endDate = task.end_date;
+          if (!endDate && task.start_date) {
+            const start = new Date(task.start_date);
+            start.setDate(start.getDate() + 7);
+            endDate = start.toISOString().split("T")[0];
+          } else if (!endDate) {
+            endDate = today;
+          }
+
+          return {
+            id: task.id,
+            name: task.title,
+            start_date: startDate,
+            end_date: endDate,
+            progress: task.progress_percent || 0,
+            dependencies: task.dependencies || [],
+            assignee_id: task.assignees?.[0] || undefined,
+          };
+        }),
+      milestones: [], // API doesn't provide milestones yet
+    };
+
+    return transformedData;
   },
 };
 
@@ -312,16 +346,18 @@ export const taskApiService = {
   ): Promise<Task> => {
     const response = await api.post(
       API_CONFIG.ENDPOINTS.TASKS.BY_PROJECT(projectId),
-      { ...taskData, project_id: projectId, status: taskData.status || "not_started" }
+      {
+        ...taskData,
+        project_id: projectId,
+        status: taskData.status || "not_started",
+      }
     );
     return response.data;
   },
 
   // 2. Get Task by ID
   getTask: async (taskId: string): Promise<Task> => {
-    const response = await api.get(
-      API_CONFIG.ENDPOINTS.TASKS.BY_ID(taskId)
-    );
+    const response = await api.get(API_CONFIG.ENDPOINTS.TASKS.BY_ID(taskId));
     return response.data;
   },
 
@@ -347,7 +383,7 @@ export const taskApiService = {
     } = {}
   ): Promise<TaskListResponse> => {
     const params = new URLSearchParams();
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         params.append(key, value.toString());
@@ -366,7 +402,7 @@ export const taskApiService = {
     filters: TaskFilters = {}
   ): Promise<Task[]> => {
     const params = new URLSearchParams();
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         params.append(key, value.toString());
