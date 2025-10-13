@@ -18,17 +18,12 @@ export interface CreateOrganizationRequest {
 }
 
 export interface OrganizationMember {
-  id: string;
-  user_id: string;
-  organization_id: string;
-  role: string;
-  joined_at: string;
   user: {
     id: string;
     email: string;
-    first_name?: string;
-    last_name?: string;
+    full_name?: string;
   };
+  role: string;
 }
 
 export interface CreateOrganizationResponse {
@@ -39,6 +34,42 @@ export interface CreateOrganizationResponse {
 export interface GetOrganizationMembersResponse {
   members: OrganizationMember[];
   total: number;
+}
+
+// Invitation types
+export interface OrganizationInvite {
+  id: string;
+  organization_id: string;
+  invited_by_user_id: string;
+  email: string;
+  role: string;
+  expires_at: string;
+  created_at: string;
+  accepted_at?: string;
+  declined_at?: string;
+  revoked_at?: string;
+}
+
+export interface CreateInviteRequest {
+  email: string;
+  role: string;
+  ttl_hours?: number;
+}
+
+export interface CreateInviteResponse {
+  invite: OrganizationInvite;
+  message: string;
+}
+
+export interface AcceptInviteWithPasswordRequest {
+  token: string;
+  password: string;
+}
+
+export interface AcceptInviteWithPasswordResponse {
+  user: any;
+  membership: any;
+  message: string;
 }
 
 // Create axios instance with base configuration
@@ -101,7 +132,7 @@ export const organizationApiService = {
   // Get organization members
   getOrganizationMembers: async (
     orgId: string
-  ): Promise<GetOrganizationMembersResponse> => {
+  ): Promise<OrganizationMember[]> => {
     const response = await organizationApi.get(
       `/organizations/${orgId}/members`
     );
@@ -120,5 +151,77 @@ export const organizationApiService = {
   // Delete organization
   deleteOrganization: async (orgId: string): Promise<void> => {
     await organizationApi.delete(`/organizations/${orgId}`);
+  },
+
+  // Invitation management
+  // Create invitation
+  createInvite: async (
+    orgId: string,
+    data: CreateInviteRequest
+  ): Promise<OrganizationInvite> => {
+    const response = await organizationApi.post(
+      `/organizations/${orgId}/invites`,
+      data
+    );
+    return response.data;
+  },
+
+  // Get organization invitations
+  getOrganizationInvites: async (
+    orgId: string
+  ): Promise<OrganizationInvite[]> => {
+    const response = await organizationApi.get(
+      `/organizations/${orgId}/invites`
+    );
+    return response.data;
+  },
+
+  // Revoke invitation
+  revokeInvite: async (orgId: string, inviteId: string): Promise<void> => {
+    await organizationApi.post(
+      `/organizations/${orgId}/invites/${inviteId}/revoke`
+    );
+  },
+
+  // Resend invitation
+  resendInvite: async (
+    orgId: string,
+    inviteId: string,
+    ttl_hours?: number
+  ): Promise<OrganizationInvite> => {
+    const response = await organizationApi.post(
+      `/organizations/${orgId}/invites/${inviteId}/resend`
+    );
+    return response.data;
+  },
+
+  // Accept invitation with password (for new users)
+  acceptInviteWithPassword: async (
+    orgId: string,
+    data: AcceptInviteWithPasswordRequest
+  ): Promise<AcceptInviteWithPasswordResponse> => {
+    const response = await organizationApi.post(
+      `/organizations/${orgId}/invites/accept-with-password`,
+      data
+    );
+    return response.data;
+  },
+
+  // Accept invitation (for existing users)
+  acceptInvite: async (orgId: string, token: string): Promise<any> => {
+    const response = await organizationApi.post(
+      `/organizations/${orgId}/invites/accept`,
+      { token }
+    );
+    return response.data;
+  },
+
+  // Decline invitation
+  declineInvite: async (orgId: string, token: string): Promise<any> => {
+    const response = await organizationApi.post(
+      `/organizations/${orgId}/invites/decline`,
+      { token }
+    );
+    return response.data;
   },
 };

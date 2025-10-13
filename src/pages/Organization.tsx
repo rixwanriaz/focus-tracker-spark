@@ -4,7 +4,7 @@ import { MainLayout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   WorkspacesTab,
-  MembersTab,
+  MembersTabWithErrorBoundary,
   GroupsTab,
   SettingsTab,
   SubscriptionTab,
@@ -91,7 +91,7 @@ const Organization: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="members" className="mt-6">
-              <MembersTab />
+              <MembersTabWithErrorBoundary />
             </TabsContent>
 
             <TabsContent value="groups" className="mt-6">

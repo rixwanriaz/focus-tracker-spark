@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, MoreHorizontal, UserPlus, Mail, Shield, Trash2 } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, UserPlus, Mail, Shield, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +14,17 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { organizationApiService } from '@/redux/api/organization';
-import { authApiService } from '@/redux/api/auth';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
+import { 
+  createInvite, 
+  getOrganizationInvites, 
+  revokeInvite, 
+  resendInvite,
+  getOrganizationMembers 
+} from '@/redux/slice/organizationSlice';
+import { useToast } from '@/hooks/use-toast';
+import { getOrgIdFromToken } from '@/lib/jwt';
 
 interface Member {
   id: string;
@@ -25,55 +34,217 @@ interface Member {
   status: 'active' | 'pending' | 'suspended';
   lastActive: string;
   avatar?: string;
+  inviteId?: string;
+  expiresAt?: string;
 }
 
 const MembersTab: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { toast } = useToast();
+  
+  // Redux state
+  const { 
+    members, 
+    invitations, 
+    loadingMembers, 
+    loadingInvitations, 
+    creatingInvite, 
+    revokingInvite, 
+    resendingInvite,
+    error,
+    currentOrganization 
+  } = useSelector((state: RootState) => state.organization);
+  
+  // Also get user info from auth state for debugging
+  const { user } = useSelector((state: RootState) => state.auth);
+  
+  // Local state
   const [searchTerm, setSearchTerm] = useState('');
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [membersData, setMembersData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [inviteForm, setInviteForm] = useState({
+    email: '',
+    role: 'member' as 'member' | 'admin'
+  });
 
-  // Mock data fallback - this would come from API
-  const mockMembers: Member[] = [
-    {
-      id: '1',
-      name: 'Rixwan Riaz123',
-      email: 'rixwan@example.com',
-      role: 'owner',
-      status: 'active',
-      lastActive: '2 hours ago',
-    },
-    {
-      id: '2',
-      name: 'John Doe',
-      email: 'john@example.com',
-      role: 'admin',
-      status: 'active',
-      lastActive: '1 day ago',
-    },
-    {
-      id: '3',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      role: 'member',
-      status: 'pending',
-      lastActive: 'Never',
-    },
-  ];
+  // Get organization ID from JWT token or state
+  const getOrganizationId = () => {
+    // Primary source: JWT token (most reliable)
+    const orgIdFromToken = getOrgIdFromToken();
+    
+    // Fallback to URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const orgIdFromUrl = urlParams.get('orgId');
+    
+    // Fallback to Redux state
+    const orgId = orgIdFromToken || 
+                  orgIdFromUrl ||
+                  currentOrganization?.slug || 
+                  currentOrganization?.name || 
+                  (user as any)?.organization_id;
+    
+    // Debug logging
+    console.log('Organization ID lookup:', {
+      tokenOrgId: orgIdFromToken,
+      urlParam: orgIdFromUrl,
+      currentOrg: currentOrganization,
+      user: user,
+      resolvedOrgId: orgId
+    });
+    
+    return orgId;
+  };
 
-  // Use API data if available, otherwise fallback to mock data
-  const members = membersData?.members?.map(member => ({
-    id: member.id,
-    name: `${member.user.first_name || ''} ${member.user.last_name || ''}`.trim() || member.user.email,
-    email: member.user.email,
-    role: member.role as 'owner' | 'admin' | 'member',
-    status: 'active' as 'active' | 'pending' | 'suspended',
-    lastActive: new Date(member.joined_at).toLocaleDateString(),
-    avatar: undefined, // API doesn't provide avatar yet
-  })) || mockMembers;
+  // Load data on component mount
+  useEffect(() => {
+    const orgId = getOrganizationId();
+    if (orgId) {
+      dispatch(getOrganizationMembers(orgId));
+      dispatch(getOrganizationInvites(orgId));
+    }
+  }, [dispatch, currentOrganization?.slug, currentOrganization?.name]);
 
-  const filteredMembers = members.filter(member =>
+  // Handle invite form submission
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!inviteForm.email.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const orgId = getOrganizationId();
+    if (!orgId) {
+      toast({
+        title: "Error", 
+        description: "No organization found. Please ensure you're logged in and have access to an organization.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await dispatch(createInvite({
+        orgId: orgId,
+        data: {
+          email: inviteForm.email.trim(),
+          role: inviteForm.role
+        }
+      })).unwrap();
+
+      toast({
+        title: "Success",
+        description: `Invitation sent to ${inviteForm.email}`,
+      });
+
+      // Reset form and close dialog
+      setInviteForm({ email: '', role: 'member' });
+      setIsInviteDialogOpen(false);
+      
+      // Refresh invitations list
+      try {
+        dispatch(getOrganizationInvites(orgId));
+      } catch (refreshError) {
+        console.error('Error refreshing invitations:', refreshError);
+      }
+    } catch (error: any) {
+      console.error('Error creating invitation:', error);
+      toast({
+        title: "Error",
+        description: error || "Failed to send invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle revoke invitation
+  const handleRevokeInvite = async (inviteId: string) => {
+    const orgId = getOrganizationId();
+    if (!orgId) return;
+
+    try {
+      await dispatch(revokeInvite({
+        orgId: orgId,
+        inviteId
+      })).unwrap();
+
+      toast({
+        title: "Success",
+        description: "Invitation revoked successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error || "Failed to revoke invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle resend invitation
+  const handleResendInvite = async (inviteId: string) => {
+    const orgId = getOrganizationId();
+    if (!orgId) return;
+
+    try {
+      await dispatch(resendInvite({
+        orgId: orgId,
+        inviteId
+      })).unwrap();
+
+      toast({
+        title: "Success",
+        description: "Invitation resent successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error || "Failed to resend invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+
+  // Process members data from Redux state
+  const processedMembers = (members || []).map(member => {
+    if (!member || !member.user) {
+      console.warn('Invalid member data:', member);
+      return null;
+    }
+    return {
+      id: member.user.id,
+      name: member.user.full_name || member.user.email || 'Unknown',
+      email: member.user.email || 'unknown@example.com',
+      role: member.role as 'owner' | 'admin' | 'member',
+      status: 'active' as 'active' | 'pending' | 'suspended',
+      lastActive: 'Active', // Backend doesn't provide joined_at in this endpoint
+      avatar: undefined, // API doesn't provide avatar yet
+    };
+  }).filter(Boolean);
+
+  // Process pending invitations
+  const pendingInvitations = (invitations || [])
+    .filter(invite => invite && !invite.accepted_at && !invite.declined_at && !invite.revoked_at)
+    .map(invite => ({
+      id: `invite-${invite.id}`,
+      name: invite.email || 'Unknown',
+      email: invite.email || 'unknown@example.com',
+      role: invite.role as 'owner' | 'admin' | 'member',
+      status: 'pending' as 'active' | 'pending' | 'suspended',
+      lastActive: 'Pending',
+      avatar: undefined,
+      inviteId: invite.id,
+      expiresAt: invite.expires_at,
+    }));
+
+  // Combine members and pending invitations
+  const allMembers = [...processedMembers, ...pendingInvitations];
+
+  const filteredMembers = allMembers.filter(member =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -96,14 +267,31 @@ const MembersTab: React.FC = () => {
     }
   };
 
-  return (
-    <div className="space-y-6">
+  // Add error boundary for rendering
+  try {
+    return (
+      <div className="space-y-6">
+      {/* Debug Info - Remove this in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+          <h3 className="text-sm font-semibold text-yellow-400 mb-2">🐛 Debug Info</h3>
+          <div className="text-xs text-gray-300 space-y-1">
+            <div>JWT Org ID: {getOrgIdFromToken()}</div>
+            <div>Current Organization: {JSON.stringify(currentOrganization)}</div>
+            <div>User: {JSON.stringify(user)}</div>
+            <div>Resolved Org ID: {getOrganizationId()}</div>
+            <div>Members Count: {members.length}</div>
+            <div>Invitations Count: {invitations.length}</div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Team Members</h2>
           <p className="text-gray-400 text-sm mt-1">
-            {isLoading ? 'Loading members...' : 
+            {loadingMembers || loadingInvitations ? 'Loading members...' : 
              error ? 'Error loading members' :
              `Manage your organization members and their permissions`}
           </p>
@@ -124,19 +312,25 @@ const MembersTab: React.FC = () => {
               </DialogTitle>
               <p className="text-gray-400 text-sm">Send an invitation to join your organization</p>
             </DialogHeader>
-            <div className="space-y-6">
+            <form onSubmit={handleInviteSubmit} className="space-y-6">
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-gray-300">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="member@example.com"
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
                   className="bg-gray-800/50 border-gray-700 text-white placeholder-gray-500 focus:bg-gray-800 focus:border-purple-500/50 transition-all duration-200 mt-2"
+                  required
                 />
               </div>
               <div>
                 <Label htmlFor="role" className="text-sm font-medium text-gray-300">Role</Label>
-                <Select>
+                <Select 
+                  value={inviteForm.role} 
+                  onValueChange={(value: 'member' | 'admin') => setInviteForm(prev => ({ ...prev, role: value }))}
+                >
                   <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white focus:bg-gray-800 focus:border-purple-500/50 transition-all duration-200 mt-2">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -158,17 +352,32 @@ const MembersTab: React.FC = () => {
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <Button 
+                  type="button"
                   variant="outline" 
-                  onClick={() => setIsInviteDialogOpen(false)}
+                  onClick={() => {
+                    setIsInviteDialogOpen(false);
+                    setInviteForm({ email: '', role: 'member' });
+                  }}
                   className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200"
                 >
                   Cancel
                 </Button>
-                <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200">
-                  Send Invitation
+                <Button 
+                  type="submit"
+                  disabled={creatingInvite}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
+                >
+                  {creatingInvite ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Invitation'
+                  )}
                 </Button>
               </div>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -180,7 +389,7 @@ const MembersTab: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-400">Total Members</p>
-                <p className="text-3xl font-bold text-white">{members.length}</p>
+                <p className="text-3xl font-bold text-white">{allMembers.length}</p>
               </div>
               <div className="p-3 bg-purple-600/20 rounded-full">
                 <UserPlus className="h-6 w-6 text-purple-400" />
@@ -195,7 +404,7 @@ const MembersTab: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-400">Active Members</p>
                 <p className="text-3xl font-bold text-white">
-                  {members.filter(m => m.status === 'active').length}
+                  {allMembers.filter(m => m.status === 'active').length}
                 </p>
               </div>
               <div className="p-3 bg-green-600/20 rounded-full">
@@ -211,7 +420,7 @@ const MembersTab: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-400">Pending Invites</p>
                 <p className="text-3xl font-bold text-white">
-                  {members.filter(m => m.status === 'pending').length}
+                  {pendingInvitations.length}
                 </p>
               </div>
               <div className="p-3 bg-yellow-600/20 rounded-full">
@@ -238,7 +447,7 @@ const MembersTab: React.FC = () => {
         <CardHeader className="bg-gray-950/50 border-b border-gray-800">
           <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-purple-400" />
-            Team Members ({members.length})
+            Team Members ({allMembers.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -279,7 +488,7 @@ const MembersTab: React.FC = () => {
               </div>
             ) : (
               <div className="divide-y divide-gray-800/50">
-                {filteredMembers.map((member, index) => (
+                {filteredMembers.map((member: Member, index) => (
                 <div key={member.id} className="grid grid-cols-6 gap-4 px-6 py-5 hover:bg-gray-800/30 transition-all duration-200 group">
                   <div className="col-span-2 flex items-center gap-4">
                     <div className="relative">
@@ -311,8 +520,13 @@ const MembersTab: React.FC = () => {
                         member.status === 'active' ? 'bg-green-300' : 
                         member.status === 'pending' ? 'bg-yellow-300' : 'bg-red-300'
                       }`}></div>
-                      {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                      {member.status === 'pending' ? 'Invited' : member.status.charAt(0).toUpperCase() + member.status.slice(1)}
                     </Badge>
+                    {member.status === 'pending' && member.expiresAt && (
+                      <span className="ml-2 text-xs text-gray-400">
+                        Expires {new Date(member.expiresAt).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                   
                   <div className="flex items-center text-sm text-gray-300">
@@ -327,18 +541,37 @@ const MembersTab: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-gray-900 border-gray-700 shadow-xl">
-                        <DropdownMenuItem className="text-gray-300 hover:bg-gray-800 focus:bg-gray-800">
-                          <Mail className="mr-2 h-4 w-4" />
-                          Resend Invitation
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-gray-300 hover:bg-gray-800 focus:bg-gray-800">
-                          <Shield className="mr-2 h-4 w-4" />
-                          Change Role
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-400 hover:bg-red-900/50 focus:bg-red-900/50">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Remove Member
-                        </DropdownMenuItem>
+                        {member.status === 'pending' && member.inviteId ? (
+                          <>
+                            <DropdownMenuItem 
+                              className="text-gray-300 hover:bg-gray-800 focus:bg-gray-800"
+                              onClick={() => handleResendInvite(member.inviteId!)}
+                              disabled={resendingInvite}
+                            >
+                              <Mail className="mr-2 h-4 w-4" />
+                              {resendingInvite ? 'Resending...' : 'Resend Invitation'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-400 hover:bg-red-900/50 focus:bg-red-900/50"
+                              onClick={() => handleRevokeInvite(member.inviteId!)}
+                              disabled={revokingInvite}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {revokingInvite ? 'Revoking...' : 'Revoke Invitation'}
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          <>
+                            <DropdownMenuItem className="text-gray-300 hover:bg-gray-800 focus:bg-gray-800">
+                              <Shield className="mr-2 h-4 w-4" />
+                              Change Role
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-400 hover:bg-red-900/50 focus:bg-red-900/50">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Remove Member
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -350,8 +583,90 @@ const MembersTab: React.FC = () => {
         </CardContent>
       </Card>
 
-    </div>
+      </div>
+    );
+  } catch (error) {
+    console.error('Error rendering MembersTab:', error);
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-lg">
+          <h2 className="text-xl font-bold text-red-400 mb-2">⚠️ Error Loading Members</h2>
+          <p className="text-red-300 mb-4">
+            There was an error loading the members tab. Please refresh the page or contact support.
+          </p>
+          <details className="text-sm text-gray-400">
+            <summary className="cursor-pointer">Error Details</summary>
+            <pre className="mt-2 p-2 bg-gray-900 rounded text-xs overflow-auto">
+              {error instanceof Error ? error.message : String(error)}
+            </pre>
+          </details>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+};
+
+// Error Boundary Component
+class MembersTabErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('MembersTab Error Boundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="space-y-6">
+          <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-lg">
+            <h2 className="text-xl font-bold text-red-400 mb-2">⚠️ Error Loading Members</h2>
+            <p className="text-red-300 mb-4">
+              There was an unexpected error in the members tab. Please refresh the page.
+            </p>
+            <button 
+              onClick={() => this.setState({ hasError: false })}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors mr-2"
+            >
+              Try Again
+            </button>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Wrapped component with error boundary
+const MembersTabWithErrorBoundary: React.FC = () => {
+  return (
+    <MembersTabErrorBoundary>
+      <MembersTab />
+    </MembersTabErrorBoundary>
   );
 };
 
-export { MembersTab };
+export { MembersTab, MembersTabWithErrorBoundary };
