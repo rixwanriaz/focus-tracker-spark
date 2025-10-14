@@ -84,7 +84,16 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         budget_amount: formData.budget_amount || 0,
         budget_currency: formData.budget_currency || 'USD',
-        project_manager_id: formData.project_manager_id || '7e7d7a2c-c09f-4e6f-b682-ca3ca920e522',
+        project_manager_id: formData.project_manager_id || undefined,
+        settings: {
+          color: formData.color,
+          privacy: formData.privacy,
+          billable: formData.billable,
+          hourlyRateType: formData.hourlyRateType,
+          customRate: formData.customRate,
+          access: formData.access,
+          inviteMembers: formData.inviteMembers,
+        },
       };
 
       await onCreateProject(projectData);

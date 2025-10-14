@@ -271,20 +271,6 @@ const MembersTab: React.FC = () => {
   try {
     return (
       <div className="space-y-6">
-      {/* Debug Info - Remove this in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <h3 className="text-sm font-semibold text-yellow-400 mb-2">🐛 Debug Info</h3>
-          <div className="text-xs text-gray-300 space-y-1">
-            <div>JWT Org ID: {getOrgIdFromToken()}</div>
-            <div>Current Organization: {JSON.stringify(currentOrganization)}</div>
-            <div>User: {JSON.stringify(user)}</div>
-            <div>Resolved Org ID: {getOrganizationId()}</div>
-            <div>Members Count: {members.length}</div>
-            <div>Invitations Count: {invitations.length}</div>
-          </div>
-        </div>
-      )}
 
       {/* Header */}
       <div className="flex items-center justify-between">
