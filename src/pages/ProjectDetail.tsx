@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/Layout";
 import { NewTaskDialog, TaskFiltersComponent, TaskTable } from "@/components/Tasks";
+import { ProjectMembersTab } from "@/components/Projects";
 import { RootState, AppDispatch } from "@/redux/store";
 import {
   getProjectById,
@@ -396,37 +397,7 @@ const ProjectDetail: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="members" className="mt-6">
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Team Members</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {projectMembers.length > 0 ? (
-                    <div className="space-y-3">
-                      {projectMembers.map((member) => (
-                        <div key={member.id} className="flex items-center gap-3 p-3 border border-gray-700 rounded-lg bg-gray-700">
-                          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
-                            <span className="text-sm font-medium text-white">
-                              {member.user?.first_name?.charAt(0)}{member.user?.last_name?.charAt(0)}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-white">
-                              {member.user?.first_name} {member.user?.last_name}
-                            </p>
-                            <p className="text-sm text-gray-400">{member.user?.email}</p>
-                          </div>
-                          <Badge variant="outline" className="border-gray-600 text-gray-300">{member.role}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>No team members found</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <ProjectMembersTab projectId={projectId!} />
             </TabsContent>
 
             <TabsContent value="timeline" className="mt-6">

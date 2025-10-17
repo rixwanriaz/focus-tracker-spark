@@ -6,7 +6,7 @@ import { API_CONFIG } from "../../config/api.config";
 
 // Rate Types
 export interface RateCreate {
-  scope: "user" | "project" | "client" | "organization";
+  scope: "user" | "project" | "client" | "default";
   scope_id?: string;
   rate_type: "billable" | "internal";
   currency: string;

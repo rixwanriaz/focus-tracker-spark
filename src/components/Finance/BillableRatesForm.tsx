@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RateFormData {
-  scope: 'user' | 'project' | 'client' | 'organization';
+  scope: 'user' | 'project' | 'client' | 'default';
   scope_id?: string;
   rate_type: 'billable' | 'internal';
   currency: string;
@@ -57,7 +57,7 @@ const BillableRatesForm: React.FC<BillableRatesFormProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="organization" className="text-gray-300">Organization</SelectItem>
+                  <SelectItem value="default" className="text-gray-300">Default</SelectItem>
                   <SelectItem value="project" className="text-gray-300">Project</SelectItem>
                   <SelectItem value="user" className="text-gray-300">User</SelectItem>
                   <SelectItem value="client" className="text-gray-300">Client</SelectItem>

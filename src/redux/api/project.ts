@@ -285,6 +285,14 @@ export const projectApiService = {
     return response.data;
   },
 
+  // 11a. Set my rate for a project (per frontend readme)
+  setMyRate: async (
+    projectId: string,
+    hourly_rate: number
+  ): Promise<void> => {
+    await api.post(`/projects/${projectId}/my-rate`, { hourly_rate });
+  },
+
   // 12. Get Gantt Chart Data
   getGanttChart: async (projectId: string): Promise<GanttChartData> => {
     const response = await api.get(
