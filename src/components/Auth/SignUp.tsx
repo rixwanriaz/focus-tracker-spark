@@ -65,9 +65,7 @@ const SignupPage: React.FC = () => {
         payload.org_name = formData.org_name.trim();
       }
 
-      console.log("🚀 Sending registration request:", payload);
       const result = await dispatch(registerUser(payload)).unwrap();
-      console.log("✅ Registration successful:", result);
       
       toast.success("Registration successful!");
       

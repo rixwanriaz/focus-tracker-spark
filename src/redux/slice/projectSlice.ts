@@ -126,7 +126,6 @@ export const updateProject = createAsyncThunk<
   }
 });
 
-
 // Project members async thunks
 export const addProjectMember = createAsyncThunk<
   ProjectMember,
@@ -385,7 +384,6 @@ const projectSlice = createSlice({
         state.updating = false;
         state.error = action.payload || "Failed to update project";
       })
-
 
       // Add Project Member
       .addCase(addProjectMember.pending, (state) => {

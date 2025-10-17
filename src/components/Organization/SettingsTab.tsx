@@ -43,7 +43,6 @@ const SettingsTab: React.FC = () => {
 
   const handleSave = () => {
     // This would save settings to API
-    console.log('Saving settings:', settings);
   };
 
   return (

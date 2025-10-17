@@ -32,8 +32,6 @@ const initialState: AuthState = {
 
 // Helper function to extract error messages
 const getErrorMessage = (err: any): string => {
-  console.log("API Error Response:", err);
-
   let errorMessage = "Operation failed";
 
   // Handle RTK Query error structure

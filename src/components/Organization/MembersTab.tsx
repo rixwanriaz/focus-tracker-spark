@@ -81,15 +81,7 @@ const MembersTab: React.FC = () => {
                   currentOrganization?.slug || 
                   currentOrganization?.name || 
                   (user as any)?.organization_id;
-    
-    // Debug logging
-    console.log('Organization ID lookup:', {
-      tokenOrgId: orgIdFromToken,
-      urlParam: orgIdFromUrl,
-      currentOrg: currentOrganization,
-      user: user,
-      resolvedOrgId: orgId
-    });
+
     
     return orgId;
   };

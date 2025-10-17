@@ -270,7 +270,6 @@ export const TimerModule: React.FC = () => {
   };
 
   const handleTimeSlotClick = (date: Date, hour: number) => {
-    console.log('Time slot clicked:', date, hour);
     // Could open a modal to create a manual time entry
   };
 

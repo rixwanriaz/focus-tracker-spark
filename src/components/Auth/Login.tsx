@@ -36,16 +36,12 @@ const LoginPage: React.FC = () => {
         password: formData.password,
       };
       
-      console.log("🚀 Sending login request:", { email: payload.email });
       const result = await dispatch(loginUser(payload)).unwrap();
-      console.log("✅ Login successful:", result);
       
       toast.success("Login successful!");
       navigate("/timer");
     } catch (error: any) {
-      console.error("❌ Login failed - Full error:", error);
-      console.error("❌ Error detail:", error?.detail);
-      console.error("❌ Error message:", error?.message);
+      // Handle login error
       
       // Better error message handling
       let errorMessage = "Login failed. Please check your credentials.";

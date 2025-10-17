@@ -80,8 +80,6 @@ const initialState: FinanceState = {
 
 // Helper function to extract error messages
 const getErrorMessage = (err: any): string => {
-  console.log("Finance API Error Response:", err);
-
   let errorMessage = "Finance operation failed";
 
   if (err?.data?.detail) {

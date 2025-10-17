@@ -63,22 +63,19 @@ export const createTask = createAsyncThunk<
   }
 });
 
-export const getTask = createAsyncThunk<
-  Task,
-  string,
-  { rejectValue: string }
->("task/getById", async (taskId, { rejectWithValue }) => {
-  try {
-    const task = await taskApiService.getTask(taskId);
-    return task;
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.detail ||
-      error?.message ||
-      "Failed to get task";
-    return rejectWithValue(errorMessage);
+export const getTask = createAsyncThunk<Task, string, { rejectValue: string }>(
+  "task/getById",
+  async (taskId, { rejectWithValue }) => {
+    try {
+      const task = await taskApiService.getTask(taskId);
+      return task;
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.detail || error?.message || "Failed to get task";
+      return rejectWithValue(errorMessage);
+    }
   }
-});
+);
 
 export const updateTask = createAsyncThunk<
   Task,
@@ -101,18 +98,21 @@ export const getProjectTasks = createAsyncThunk<
   Task[],
   { projectId: string; filters?: TaskFilters },
   { rejectValue: string }
->("task/getProjectTasks", async ({ projectId, filters = {} }, { rejectWithValue }) => {
-  try {
-    const tasks = await taskApiService.getProjectTasks(projectId, filters);
-    return tasks;
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.detail ||
-      error?.message ||
-      "Failed to get project tasks";
-    return rejectWithValue(errorMessage);
+>(
+  "task/getProjectTasks",
+  async ({ projectId, filters = {} }, { rejectWithValue }) => {
+    try {
+      const tasks = await taskApiService.getProjectTasks(projectId, filters);
+      return tasks;
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to get project tasks";
+      return rejectWithValue(errorMessage);
+    }
   }
-});
+);
 
 export const listTasks = createAsyncThunk<
   { tasks: Task[]; total: number },
@@ -124,9 +124,7 @@ export const listTasks = createAsyncThunk<
     return { tasks: response.tasks, total: response.total };
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.detail ||
-      error?.message ||
-      "Failed to list tasks";
+      error?.response?.data?.detail || error?.message || "Failed to list tasks";
     return rejectWithValue(errorMessage);
   }
 });
@@ -232,7 +230,10 @@ const taskSlice = createSlice({
       state.filters = {};
     },
     // Set pagination
-    setPagination: (state, action: PayloadAction<Partial<TaskState["pagination"]>>) => {
+    setPagination: (
+      state,
+      action: PayloadAction<Partial<TaskState["pagination"]>>
+    ) => {
       state.pagination = { ...state.pagination, ...action.payload };
     },
   },
@@ -247,7 +248,7 @@ const taskSlice = createSlice({
         state.creating = false;
         state.tasks.push(action.payload);
         state.error = null;
-        
+
         // Add to project tasks
         const projectId = action.payload.project_id;
         if (!state.projectTasks[projectId]) {
@@ -284,18 +285,20 @@ const taskSlice = createSlice({
         state.updating = false;
         state.currentTask = action.payload;
         state.error = null;
-        
+
         // Update in tasks list
-        const index = state.tasks.findIndex(task => task.id === action.payload.id);
+        const index = state.tasks.findIndex(
+          (task) => task.id === action.payload.id
+        );
         if (index !== -1) {
           state.tasks[index] = action.payload;
         }
-        
+
         // Update in project tasks
         const projectId = action.payload.project_id;
         if (state.projectTasks[projectId]) {
           const projectIndex = state.projectTasks[projectId].findIndex(
-            task => task.id === action.payload.id
+            (task) => task.id === action.payload.id
           );
           if (projectIndex !== -1) {
             state.projectTasks[projectId][projectIndex] = action.payload;
@@ -347,22 +350,24 @@ const taskSlice = createSlice({
       .addCase(completeTask.fulfilled, (state, action: PayloadAction<Task>) => {
         state.updating = false;
         state.error = null;
-        
+
         // Update task in lists
         const updateTaskInList = (tasks: Task[]) => {
-          const index = tasks.findIndex(task => task.id === action.payload.id);
+          const index = tasks.findIndex(
+            (task) => task.id === action.payload.id
+          );
           if (index !== -1) {
             tasks[index] = action.payload;
           }
         };
-        
+
         updateTaskInList(state.tasks);
-        
+
         const projectId = action.payload.project_id;
         if (state.projectTasks[projectId]) {
           updateTaskInList(state.projectTasks[projectId]);
         }
-        
+
         if (state.currentTask?.id === action.payload.id) {
           state.currentTask = action.payload;
         }
@@ -377,29 +382,34 @@ const taskSlice = createSlice({
         state.updating = true;
         state.error = null;
       })
-      .addCase(updateTaskStatus.fulfilled, (state, action: PayloadAction<Task>) => {
-        state.updating = false;
-        state.error = null;
-        
-        // Update task in lists
-        const updateTaskInList = (tasks: Task[]) => {
-          const index = tasks.findIndex(task => task.id === action.payload.id);
-          if (index !== -1) {
-            tasks[index] = action.payload;
+      .addCase(
+        updateTaskStatus.fulfilled,
+        (state, action: PayloadAction<Task>) => {
+          state.updating = false;
+          state.error = null;
+
+          // Update task in lists
+          const updateTaskInList = (tasks: Task[]) => {
+            const index = tasks.findIndex(
+              (task) => task.id === action.payload.id
+            );
+            if (index !== -1) {
+              tasks[index] = action.payload;
+            }
+          };
+
+          updateTaskInList(state.tasks);
+
+          const projectId = action.payload.project_id;
+          if (state.projectTasks[projectId]) {
+            updateTaskInList(state.projectTasks[projectId]);
           }
-        };
-        
-        updateTaskInList(state.tasks);
-        
-        const projectId = action.payload.project_id;
-        if (state.projectTasks[projectId]) {
-          updateTaskInList(state.projectTasks[projectId]);
+
+          if (state.currentTask?.id === action.payload.id) {
+            state.currentTask = action.payload;
+          }
         }
-        
-        if (state.currentTask?.id === action.payload.id) {
-          state.currentTask = action.payload;
-        }
-      })
+      )
       .addCase(updateTaskStatus.rejected, (state, action) => {
         state.updating = false;
         state.error = action.payload || "Failed to update task status";
@@ -413,22 +423,24 @@ const taskSlice = createSlice({
       .addCase(reopenTask.fulfilled, (state, action: PayloadAction<Task>) => {
         state.updating = false;
         state.error = null;
-        
+
         // Update task in lists
         const updateTaskInList = (tasks: Task[]) => {
-          const index = tasks.findIndex(task => task.id === action.payload.id);
+          const index = tasks.findIndex(
+            (task) => task.id === action.payload.id
+          );
           if (index !== -1) {
             tasks[index] = action.payload;
           }
         };
-        
+
         updateTaskInList(state.tasks);
-        
+
         const projectId = action.payload.project_id;
         if (state.projectTasks[projectId]) {
           updateTaskInList(state.projectTasks[projectId]);
         }
-        
+
         if (state.currentTask?.id === action.payload.id) {
           state.currentTask = action.payload;
         }
@@ -446,17 +458,17 @@ const taskSlice = createSlice({
       .addCase(deleteTask.fulfilled, (state, action: PayloadAction<string>) => {
         state.deleting = false;
         state.error = null;
-        
+
         // Remove task from lists
-        state.tasks = state.tasks.filter(task => task.id !== action.payload);
-        
+        state.tasks = state.tasks.filter((task) => task.id !== action.payload);
+
         // Remove from project tasks
-        Object.keys(state.projectTasks).forEach(projectId => {
+        Object.keys(state.projectTasks).forEach((projectId) => {
           state.projectTasks[projectId] = state.projectTasks[projectId].filter(
-            task => task.id !== action.payload
+            (task) => task.id !== action.payload
           );
         });
-        
+
         if (state.currentTask?.id === action.payload) {
           state.currentTask = null;
         }

@@ -132,7 +132,7 @@ export const resumeTimer = createAsyncThunk<
 // Stop Timer
 export const stopTimer = createAsyncThunk<
   TimeEntry,
-  { timeEntryId: string; data?: Omit<StopTimerRequest, 'time_entry_id'> },
+  { timeEntryId: string; data?: Omit<StopTimerRequest, "time_entry_id"> },
   { rejectValue: string }
 >("time/stop", async ({ timeEntryId, data }, { rejectWithValue }) => {
   try {
@@ -140,9 +140,7 @@ export const stopTimer = createAsyncThunk<
     return timer;
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.detail ||
-      error?.message ||
-      "Failed to stop timer";
+      error?.response?.data?.detail || error?.message || "Failed to stop timer";
     return rejectWithValue(errorMessage);
   }
 });
@@ -194,9 +192,7 @@ export const getEntry = createAsyncThunk<
     return entry;
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.detail ||
-      error?.message ||
-      "Failed to get entry";
+      error?.response?.data?.detail || error?.message || "Failed to get entry";
     return rejectWithValue(errorMessage);
   }
 });
@@ -335,11 +331,14 @@ const timeSlice = createSlice({
         state.starting = true;
         state.error = null;
       })
-      .addCase(startTimer.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.starting = false;
-        state.activeTimer = action.payload;
-        state.error = null;
-      })
+      .addCase(
+        startTimer.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.starting = false;
+          state.activeTimer = action.payload;
+          state.error = null;
+        }
+      )
       .addCase(startTimer.rejected, (state, action) => {
         state.starting = false;
         state.error = action.payload || "Failed to start timer";
@@ -350,11 +349,14 @@ const timeSlice = createSlice({
         state.pausing = true;
         state.error = null;
       })
-      .addCase(pauseTimer.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.pausing = false;
-        state.activeTimer = action.payload;
-        state.error = null;
-      })
+      .addCase(
+        pauseTimer.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.pausing = false;
+          state.activeTimer = action.payload;
+          state.error = null;
+        }
+      )
       .addCase(pauseTimer.rejected, (state, action) => {
         state.pausing = false;
         state.error = action.payload || "Failed to pause timer";
@@ -365,11 +367,14 @@ const timeSlice = createSlice({
         state.resuming = true;
         state.error = null;
       })
-      .addCase(resumeTimer.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.resuming = false;
-        state.activeTimer = action.payload;
-        state.error = null;
-      })
+      .addCase(
+        resumeTimer.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.resuming = false;
+          state.activeTimer = action.payload;
+          state.error = null;
+        }
+      )
       .addCase(resumeTimer.rejected, (state, action) => {
         state.resuming = false;
         state.error = action.payload || "Failed to resume timer";
@@ -380,12 +385,15 @@ const timeSlice = createSlice({
         state.stopping = true;
         state.error = null;
       })
-      .addCase(stopTimer.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.stopping = false;
-        state.activeTimer = null;
-        state.entries.unshift(action.payload);
-        state.error = null;
-      })
+      .addCase(
+        stopTimer.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.stopping = false;
+          state.activeTimer = null;
+          state.entries.unshift(action.payload);
+          state.error = null;
+        }
+      )
       .addCase(stopTimer.rejected, (state, action) => {
         state.stopping = false;
         state.error = action.payload || "Failed to stop timer";
@@ -396,11 +404,14 @@ const timeSlice = createSlice({
         state.creating = true;
         state.error = null;
       })
-      .addCase(createManualEntry.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.creating = false;
-        state.entries.unshift(action.payload);
-        state.error = null;
-      })
+      .addCase(
+        createManualEntry.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.creating = false;
+          state.entries.unshift(action.payload);
+          state.error = null;
+        }
+      )
       .addCase(createManualEntry.rejected, (state, action) => {
         state.creating = false;
         state.error = action.payload || "Failed to create manual entry";
@@ -427,11 +438,14 @@ const timeSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(getEntry.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.loading = false;
-        state.currentEntry = action.payload;
-        state.error = null;
-      })
+      .addCase(
+        getEntry.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.loading = false;
+          state.currentEntry = action.payload;
+          state.error = null;
+        }
+      )
       .addCase(getEntry.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to get entry";
@@ -442,18 +456,23 @@ const timeSlice = createSlice({
         state.updating = true;
         state.error = null;
       })
-      .addCase(updateEntry.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.updating = false;
-        state.currentEntry = action.payload;
-        
-        // Update in entries list
-        const index = state.entries.findIndex(entry => entry.id === action.payload.id);
-        if (index !== -1) {
-          state.entries[index] = action.payload;
+      .addCase(
+        updateEntry.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.updating = false;
+          state.currentEntry = action.payload;
+
+          // Update in entries list
+          const index = state.entries.findIndex(
+            (entry) => entry.id === action.payload.id
+          );
+          if (index !== -1) {
+            state.entries[index] = action.payload;
+          }
+
+          state.error = null;
         }
-        
-        state.error = null;
-      })
+      )
       .addCase(updateEntry.rejected, (state, action) => {
         state.updating = false;
         state.error = action.payload || "Failed to update entry";
@@ -464,16 +483,21 @@ const timeSlice = createSlice({
         state.deleting = true;
         state.error = null;
       })
-      .addCase(deleteEntry.fulfilled, (state, action: PayloadAction<string>) => {
-        state.deleting = false;
-        state.entries = state.entries.filter(entry => entry.id !== action.payload);
-        
-        if (state.currentEntry?.id === action.payload) {
-          state.currentEntry = null;
+      .addCase(
+        deleteEntry.fulfilled,
+        (state, action: PayloadAction<string>) => {
+          state.deleting = false;
+          state.entries = state.entries.filter(
+            (entry) => entry.id !== action.payload
+          );
+
+          if (state.currentEntry?.id === action.payload) {
+            state.currentEntry = null;
+          }
+
+          state.error = null;
         }
-        
-        state.error = null;
-      })
+      )
       .addCase(deleteEntry.rejected, (state, action) => {
         state.deleting = false;
         state.error = action.payload || "Failed to delete entry";
@@ -484,21 +508,26 @@ const timeSlice = createSlice({
         state.updating = true;
         state.error = null;
       })
-      .addCase(applyIdleTrim.fulfilled, (state, action: PayloadAction<TimeEntry>) => {
-        state.updating = false;
-        
-        // Update in entries list
-        const index = state.entries.findIndex(entry => entry.id === action.payload.id);
-        if (index !== -1) {
-          state.entries[index] = action.payload;
+      .addCase(
+        applyIdleTrim.fulfilled,
+        (state, action: PayloadAction<TimeEntry>) => {
+          state.updating = false;
+
+          // Update in entries list
+          const index = state.entries.findIndex(
+            (entry) => entry.id === action.payload.id
+          );
+          if (index !== -1) {
+            state.entries[index] = action.payload;
+          }
+
+          if (state.currentEntry?.id === action.payload.id) {
+            state.currentEntry = action.payload;
+          }
+
+          state.error = null;
         }
-        
-        if (state.currentEntry?.id === action.payload.id) {
-          state.currentEntry = action.payload;
-        }
-        
-        state.error = null;
-      })
+      )
       .addCase(applyIdleTrim.rejected, (state, action) => {
         state.updating = false;
         state.error = action.payload || "Failed to apply idle trim";
@@ -509,19 +538,24 @@ const timeSlice = createSlice({
         state.updating = true;
         state.error = null;
       })
-      .addCase(bulkAdjust.fulfilled, (state, action: PayloadAction<TimeEntry[]>) => {
-        state.updating = false;
-        
-        // Update all affected entries
-        action.payload.forEach(updatedEntry => {
-          const index = state.entries.findIndex(entry => entry.id === updatedEntry.id);
-          if (index !== -1) {
-            state.entries[index] = updatedEntry;
-          }
-        });
-        
-        state.error = null;
-      })
+      .addCase(
+        bulkAdjust.fulfilled,
+        (state, action: PayloadAction<TimeEntry[]>) => {
+          state.updating = false;
+
+          // Update all affected entries
+          action.payload.forEach((updatedEntry) => {
+            const index = state.entries.findIndex(
+              (entry) => entry.id === updatedEntry.id
+            );
+            if (index !== -1) {
+              state.entries[index] = updatedEntry;
+            }
+          });
+
+          state.error = null;
+        }
+      )
       .addCase(bulkAdjust.rejected, (state, action) => {
         state.updating = false;
         state.error = action.payload || "Failed to bulk adjust";
@@ -542,4 +576,3 @@ export const {
 
 // Export reducer
 export default timeSlice.reducer;
-

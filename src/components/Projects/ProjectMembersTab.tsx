@@ -47,7 +47,7 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
   const [isRateSetupDialogOpen, setIsRateSetupDialogOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<ProjectMember | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberWithRate | null>(null);
   const [membersWithRates, setMembersWithRates] = useState<MemberWithRate[]>([]);
 
   // Load project members
@@ -80,7 +80,7 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
             hourly_rate = Math.random() > 0.5 ? Math.floor(Math.random() * 100) + 50 : undefined;
             rate_set = hourly_rate !== undefined;
           } catch (error) {
-            console.log('Rate check failed for user:', member.user_id);
+            // Rate check failed for user
           }
 
           return {
@@ -119,7 +119,7 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
   };
 
   // Handle rate setup
-  const handleRateSetup = (member: ProjectMember) => {
+  const handleRateSetup = (member: MemberWithRate) => {
     setSelectedMember(member);
     setIsRateSetupDialogOpen(true);
   };
