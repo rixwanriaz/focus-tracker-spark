@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CalendarPicker } from '@/components/ui/calendar-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RateFormData {
@@ -11,8 +12,8 @@ interface RateFormData {
   rate_type: 'billable' | 'internal';
   currency: string;
   hourly_rate: number;
-  effective_from?: string;
-  effective_to?: string;
+  effective_from?: Date;
+  effective_to?: Date;
 }
 
 interface BillableRatesFormProps {
@@ -40,7 +41,7 @@ const BillableRatesForm: React.FC<BillableRatesFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md sm:max-w-lg w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md sm:max-w-lg w-[95vw] max-h-[85vh] overflow-y-auto pb-8">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">{title}</DialogTitle>
         </DialogHeader>
@@ -104,12 +105,11 @@ const BillableRatesForm: React.FC<BillableRatesFormProps> = ({
               <Input
                 id="hourly_rate"
                 type="number"
-                step="0.01"
                 min="0"
                 value={formData.hourly_rate}
-                onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: parseFloat(e.target.value) || 0 }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: parseFloat(e.target.value) }))}
                 className="bg-gray-800 border-gray-700 h-10 sm:h-11"
-                placeholder="0.00"
+                placeholder="0"
               />
             </div>
           </div>
@@ -118,28 +118,26 @@ const BillableRatesForm: React.FC<BillableRatesFormProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="effective_from" className="text-sm font-medium">Effective From</Label>
-              <Input
-                id="effective_from"
-                type="date"
-                value={formData.effective_from || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, effective_from: e.target.value }))}
-                className="bg-gray-800 border-gray-700 h-10 sm:h-11"
+              <CalendarPicker
+                value={formData.effective_from}
+                onChange={(date) => setFormData(prev => ({ ...prev, effective_from: date }))}
+                placeholder="dd/mm/yyyy"
+                maxDate={formData.effective_to}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="effective_to" className="text-sm font-medium">Effective To</Label>
-              <Input
-                id="effective_to"
-                type="date"
-                value={formData.effective_to || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, effective_to: e.target.value }))}
-                className="bg-gray-800 border-gray-700 h-10 sm:h-11"
+              <CalendarPicker
+                value={formData.effective_to}
+                onChange={(date) => setFormData(prev => ({ ...prev, effective_to: date }))}
+                placeholder="dd/mm/yyyy"
+                minDate={formData.effective_from}
               />
             </div>
           </div>
 
           {/* Action Buttons - Responsive Layout */}
-          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 sm:pt-6">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 sm:pt-6 pb-4">
             <Button
               type="button"
               variant="outline"

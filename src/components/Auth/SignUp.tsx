@@ -74,7 +74,7 @@ const SignupPage: React.FC = () => {
       // Add 2-3 second delay with loader before navigation
       await new Promise(resolve => setTimeout(resolve, 2500));
       
-      navigate("/timer");
+      // navigate("/timer");
     } catch (error: any) {
       console.error("❌ Registration failed - Full error:", error);
       console.error("❌ Error detail:", error?.detail);
