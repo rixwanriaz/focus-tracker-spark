@@ -25,10 +25,7 @@ export const projectValidationSchema = Yup.object({
     .max(500, "Description must be less than 500 characters")
     .notRequired(),
 
-  start_date: Yup.date()
-    .required("Start date is required")
-    .min(new Date(), "Start date cannot be in the past")
-    .nullable(),
+  start_date: Yup.date().required("Start date is required").nullable(),
 
   end_date: Yup.date()
     .required("End date is required")

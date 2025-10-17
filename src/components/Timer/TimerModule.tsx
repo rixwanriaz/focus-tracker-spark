@@ -4,12 +4,10 @@ import { addWeeks, subWeeks, startOfWeek, addDays, format } from 'date-fns';
 import { TimerInput } from './TimerInput';
 import { WeekNavigator } from './WeekNavigator';
 import { CalendarView } from './CalendarView';
-import { TimerSidebar } from './TimerSidebar';
 import { ManualTimeEntryDialog } from './ManualTimeEntryDialog';
-import { TimerState, WeekDay, TimeEntry, Goal, Favorite, ViewMode } from './types';
+import { TimerState, WeekDay, TimeEntry } from './types';
 import { Button } from '@/components/ui/button';
-import { Calendar, List, Table, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Calendar, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppDispatch, RootState } from '@/redux/store';
 import { 
@@ -44,28 +42,11 @@ export const TimerModule: React.FC = () => {
   // Week Navigation
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [weekDays, setWeekDays] = useState<WeekDay[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   
   // Dialog state
   const [manualEntryDialogOpen, setManualEntryDialogOpen] = useState(false);
 
-  // Goals and Favorites
-  const [goals, setGoals] = useState<Goal[]>([
-    {
-      id: '1',
-      title: 'Weekly coding goal',
-      target: 40,
-      current: 17.45,
-    },
-  ]);
-
-  const [favorites, setFavorites] = useState<Favorite[]>([
-    {
-      id: '1',
-      description: 'Daily standup meeting',
-      project: 'Team Sync',
-    },
-  ]);
+  // Goals and Favorites removed
 
   // Get tasks for selected project
   const selectedProjectTasks = timerState.project_id 
@@ -293,28 +274,7 @@ export const TimerModule: React.FC = () => {
     // Could open a modal to create a manual time entry
   };
 
-  // Goal and Favorite handlers
-  const handleCreateGoal = () => {
-    toast.info('Create goal modal would open here');
-  };
-
-  const handleAddFavorite = () => {
-    toast.info('Add favorite modal would open here');
-  };
-
-  const handleGoalClick = (goal: Goal) => {
-    toast.info(`Goal: ${goal.title}`, {
-      description: `Progress: ${goal.current}/${goal.target} hours`,
-    });
-  };
-
-  const handleFavoriteClick = (favorite: Favorite) => {
-    setTimerState({
-      ...timerState,
-      currentDescription: favorite.description,
-    });
-    toast.success('Favorite loaded!');
-  };
+  // Goal and Favorite handlers removed
 
   return (
     <div className="h-screen flex flex-col bg-gray-950">
@@ -355,47 +315,14 @@ export const TimerModule: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <Button
-                variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                variant="default"
                 size="sm"
-                onClick={() => setViewMode('calendar')}
-                className={cn(
-                  "gap-2",
-                  viewMode === 'calendar' 
-                    ? "bg-purple-600 text-white hover:bg-purple-700" 
-                    : "text-gray-400 hover:text-white hover:bg-gray-800"
-                )}
+                className="gap-2 bg-purple-600 text-white hover:bg-purple-700"
               >
                 <Calendar className="h-4 w-4" />
                 Calendar
               </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  "gap-2",
-                  viewMode === 'list' 
-                    ? "bg-purple-600 text-white hover:bg-purple-700" 
-                    : "text-gray-400 hover:text-white hover:bg-gray-800"
-                )}
-              >
-                <List className="h-4 w-4" />
-                List view
-              </Button>
-              <Button
-                variant={viewMode === 'timesheet' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('timesheet')}
-                className={cn(
-                  "gap-2",
-                  viewMode === 'timesheet' 
-                    ? "bg-purple-600 text-white hover:bg-purple-700" 
-                    : "text-gray-400 hover:text-white hover:bg-gray-800"
-                )}
-              >
-                <Table className="h-4 w-4" />
-                Timesheet
-              </Button>
+              {/* List view and Timesheet hidden */}
             </div>
 
             <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800">
@@ -408,42 +335,10 @@ export const TimerModule: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden bg-gray-950">
         {/* Calendar View */}
-        {viewMode === 'calendar' && (
-          <CalendarView
-            weekDays={weekDays}
-            onEntryClick={handleEntryClick}
-            onTimeSlotClick={handleTimeSlotClick}
-          />
-        )}
-
-        {/* List View Placeholder */}
-        {viewMode === 'list' && (
-          <div className="flex-1 flex items-center justify-center text-gray-500 bg-gray-950">
-            <div className="text-center">
-              <List className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>List view coming soon</p>
-            </div>
-          </div>
-        )}
-
-        {/* Timesheet View Placeholder */}
-        {viewMode === 'timesheet' && (
-          <div className="flex-1 flex items-center justify-center text-gray-500 bg-gray-950">
-            <div className="text-center">
-              <Table className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Timesheet view coming soon</p>
-            </div>
-          </div>
-        )}
-
-        {/* Sidebar */}
-        <TimerSidebar
-          goals={goals}
-          favorites={favorites}
-          onCreateGoal={handleCreateGoal}
-          onAddFavorite={handleAddFavorite}
-          onGoalClick={handleGoalClick}
-          onFavoriteClick={handleFavoriteClick}
+        <CalendarView
+          weekDays={weekDays}
+          onEntryClick={handleEntryClick}
+          onTimeSlotClick={handleTimeSlotClick}
         />
       </div>
     </div>

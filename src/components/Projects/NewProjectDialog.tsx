@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CalendarPicker } from '@/components/ui/calendar-picker';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
@@ -77,10 +78,10 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
         name: formData.name || '',
         description: formData.description || undefined,
         start_date: formData.start_date 
-          ? new Date(formData.start_date).toISOString().split('T')[0]
+          ? formData.start_date.toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0],
         end_date: formData.end_date 
-          ? new Date(formData.end_date).toISOString().split('T')[0]
+          ? formData.end_date.toISOString().split('T')[0]
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         budget_amount: formData.budget_amount || 0,
         budget_currency: formData.budget_currency || 'USD',
@@ -225,14 +226,14 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Start Date
                 </Label>
-                <Input
-                  type="date"
-                  value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ''}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value ? new Date(e.target.value) : undefined })}
+                <CalendarPicker
+                  value={formData.start_date}
+                  onChange={(date) => setFormData({ ...formData, start_date: date })}
+                  placeholder="dd/mm/yyyy"
                   className={cn(
-                    "bg-gray-800 border-gray-700 text-white",
                     getFieldError('start_date') && "border-red-500"
                   )}
+                  maxDate={formData.end_date}
                 />
                 {getFieldError('start_date') && (
                   <p className="text-red-400 text-xs">{getFieldError('start_date')}</p>
@@ -242,14 +243,14 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   End Date
                 </Label>
-                <Input
-                  type="date"
-                  value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ''}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value ? new Date(e.target.value) : undefined })}
+                <CalendarPicker
+                  value={formData.end_date}
+                  onChange={(date) => setFormData({ ...formData, end_date: date })}
+                  placeholder="dd/mm/yyyy"
                   className={cn(
-                    "bg-gray-800 border-gray-700 text-white",
                     getFieldError('end_date') && "border-red-500"
                   )}
+                  minDate={formData.start_date}
                 />
                 {getFieldError('end_date') && (
                   <p className="text-red-400 text-xs">{getFieldError('end_date')}</p>

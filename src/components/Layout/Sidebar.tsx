@@ -100,20 +100,20 @@ const Sidebar: React.FC<SidebarProps> = ({
     ],
     analyze: [
       { icon: BarChart3, label: 'Reports', path: '/reports' },
-      { icon: CheckSquare, label: 'Approvals', path: '/approvals' }
+      // { icon: CheckSquare, label: 'Approvals', path: '/approvals' }
     ],
     manage: [
       { icon: FolderOpen, label: 'Projects', path: '/projects' },
-      { icon: Users, label: 'Clients', path: '/clients' },
+      // { icon: Users, label: 'Clients', path: '/clients' },
       { icon: UsersRound, label: 'Members', path: '/organization?tab=members' },
       { icon: DollarSign, label: 'Billable rates', path: '/billable-rates' },
       { icon: FileText, label: 'Invoices', path: '/invoices' },
-      { icon: Tag, label: 'Tags', path: '/tags' },
-      { icon: Target, label: 'Goals', beta: true, path: '/goals' },
-      { icon: Link, label: 'Integrations', path: '/integrations' }
+      // { icon: Tag, label: 'Tags', path: '/tags' },
+      // { icon: Target, label: 'Goals', beta: true, path: '/goals' },
+      // { icon: Link, label: 'Integrations', path: '/integrations' }
     ],
     admin: [
-      { icon: CreditCard, label: 'Subscription', path: '/subscription' },
+      // { icon: CreditCard, label: 'Subscription', path: '/subscription' },
       { icon: Building, label: 'Organization', path: '/organization' },
       { icon: Settings, label: 'Settings', path: '/settings' },
       { icon: Terminal, label: 'Admin Console', path: '/admin-console' }
