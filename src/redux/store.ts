@@ -6,6 +6,7 @@ import organizationReducer from "./slice/organizationSlice";
 import taskReducer from "./slice/taskSlice";
 import timeReducer from "./slice/timeSlice";
 import financeReducer from "./slice/financeSlice";
+import { setApiStore } from "../service/api";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,9 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
 });
+
+// Inject the store into the API layer once it's configured
+setApiStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

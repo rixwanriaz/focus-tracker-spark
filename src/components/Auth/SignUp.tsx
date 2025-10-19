@@ -96,7 +96,7 @@ const SignupPage: React.FC = () => {
         } else if (error.toLowerCase().includes('already')) {
           errorMessage = "This email is already registered.";
         } else if (error.toLowerCase().includes('network')) {
-          errorMessage = "Cannot connect to server. Make sure the backend is running on http://localhost:8080";
+          errorMessage = "Cannot connect to server. Make sure the backend is running";
         } else {
           errorMessage = error;
         }

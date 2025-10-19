@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface RateFormData {
   scope: 'user' | 'project' | 'client' | 'default';
   scope_id?: string;
-  rate_type: 'billable' | 'internal';
+  rate_type: 'billable' | 'cost';
   currency: string;
   hourly_rate: number;
   effective_from?: Date;
@@ -76,7 +76,7 @@ const BillableRatesForm: React.FC<BillableRatesFormProps> = ({
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
                   <SelectItem value="billable" className="text-gray-300">Billable</SelectItem>
-                  <SelectItem value="internal" className="text-gray-300">Internal</SelectItem>
+                  <SelectItem value="cost" className="text-gray-300">Cost</SelectItem>
                 </SelectContent>
               </Select>
             </div>

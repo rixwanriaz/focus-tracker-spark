@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/Layout";
 import { NewTaskDialog, TaskFiltersComponent, TaskTable } from "@/components/Tasks";
 import { ProjectMembersTab } from "@/components/Projects";
-import { ProjectUserCostsTab } from "@/components/Finance";
+import { ProjectUserCostsTab, ProjectExpensesTab } from "@/components/Finance";
 import { RootState, AppDispatch } from "@/redux/store";
 import {
   getProjectById,
@@ -154,7 +154,13 @@ const ProjectDetail: React.FC = () => {
   // console.log("Filtered Tasks:", filteredTasks);
 
   // Format project members for task assignment
-  const assignees = projectMembers.map(member => ({
+  const assigneesForFilters = projectMembers.map(member => ({
+    id: member.user_id,
+    first_name: member.user?.first_name || member.user_email?.split("@")[0] || "",
+    last_name: member.user?.last_name || "",
+  }));
+
+  const assigneesForDialog = projectMembers.map(member => ({
     id: member.user_id,
     email: member.user_email,
   }));
@@ -217,6 +223,13 @@ const ProjectDetail: React.FC = () => {
                 <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/invoices?project_id=${currentProject.id}`)}
+                  className="bg-pink-600 hover:bg-pink-700 text-white"
+                >
+                  Create Invoice
                 </Button>
               </div>
             </div>
@@ -289,12 +302,13 @@ const ProjectDetail: React.FC = () => {
         {/* Main Content */}
         <div className="px-6 pb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 bg-gray-800 border-gray-700">
+            <TabsList className="grid w-full grid-cols-6 bg-gray-800 border-gray-700">
               <TabsTrigger value="tasks" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Tasks</TabsTrigger>
               <TabsTrigger value="overview" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Overview</TabsTrigger>
               <TabsTrigger value="members" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Members</TabsTrigger>
               <TabsTrigger value="timeline" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Timeline</TabsTrigger>
               <TabsTrigger value="costs" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Costs</TabsTrigger>
+              <TabsTrigger value="expenses" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Expenses</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tasks" className="mt-6">
@@ -306,7 +320,7 @@ const ProjectDetail: React.FC = () => {
                       filters={taskFilters}
                       onFiltersChange={handleFiltersChange}
                       onClearFilters={handleClearFilters}
-                      assignees={assignees}
+                      assignees={assigneesForFilters}
                     />
                   </CardContent>
                 </Card>
@@ -341,7 +355,7 @@ const ProjectDetail: React.FC = () => {
                     <NewTaskDialog
                       projectId={projectId!}
                       onCreateTask={handleCreateTask}
-                      assignees={assignees}
+                      assignees={assigneesForDialog}
                       assigneesLoading={loadingMembers}
                       onEnsureAssignees={() => {
                         if (projectId) {
@@ -427,6 +441,10 @@ const ProjectDetail: React.FC = () => {
 
             <TabsContent value="costs" className="mt-6">
               <ProjectUserCostsTab projectId={projectId!} />
+            </TabsContent>
+
+            <TabsContent value="expenses" className="mt-6">
+              <ProjectExpensesTab projectId={projectId!} />
             </TabsContent>
           </Tabs>
         </div>

@@ -1,8 +1,13 @@
 // src/service/api.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { API_CONFIG } from "../config/api.config";
-import { store } from "../redux/store";
-import { logout, updateTokens } from "../redux/slice/authSlice";
+
+// IMPORTANT: Do NOT import the Redux store here to avoid circular deps with slices
+// We'll inject the store from the app entry via setApiStore
+let injectedStore: any | null = null;
+export const setApiStore = (store: any) => {
+  injectedStore = store;
+};
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -36,9 +41,9 @@ const processQueue = (error: any = null, token: string | null = null) => {
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    // Get token from Redux state
-    const state = store.getState();
-    const token = state.auth?.accessToken;
+    // Get token from injected Redux state if available, else use localStorage
+    const token = injectedStore?.getState?.().auth?.accessToken ||
+      localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -88,13 +93,16 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const state = store.getState();
-      const refreshToken = state.auth?.refreshToken;
+      const refreshToken =
+        injectedStore?.getState?.().auth?.refreshToken ||
+        localStorage.getItem("refresh_token");
 
       if (!refreshToken) {
         // No refresh token available, logout
         isRefreshing = false;
-        store.dispatch(logout());
+        // Clear stored tokens and redirect
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         window.location.href = "/login";
         return Promise.reject(error);
       }
@@ -112,13 +120,16 @@ api.interceptors.response.use(
         localStorage.setItem("access_token", access_token);
         localStorage.setItem("refresh_token", newRefreshToken);
 
-        // Update Redux state with new tokens
-        store.dispatch(
-          updateTokens({
-            accessToken: access_token,
-            refreshToken: newRefreshToken,
-          })
-        );
+        // Optionally update Redux state if store was injected
+        try {
+          injectedStore?.dispatch?.({
+            type: "auth/updateTokens",
+            payload: {
+              accessToken: access_token,
+              refreshToken: newRefreshToken,
+            },
+          });
+        } catch {}
 
         // Update axios default header
         if (originalRequest.headers) {
@@ -135,7 +146,9 @@ api.interceptors.response.use(
         // Refresh failed - logout and redirect to login
         processQueue(refreshError, null);
         isRefreshing = false;
-        store.dispatch(logout());
+        // Clear stored tokens and redirect
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }

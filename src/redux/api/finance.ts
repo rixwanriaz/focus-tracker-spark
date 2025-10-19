@@ -8,7 +8,7 @@ import { API_CONFIG } from "../../config/api.config";
 export interface RateCreate {
   scope: "user" | "project" | "client" | "default";
   scope_id?: string;
-  rate_type: "billable" | "internal";
+  rate_type: "billable" | "cost";
   currency: string;
   hourly_rate: number;
   effective_from?: string;
@@ -94,9 +94,10 @@ export interface FinanceAlertOut {
   organization_id: string;
   project_id?: string;
   alert_type: string;
-  title: string;
-  message: string;
   severity: "low" | "medium" | "high" | "critical";
+  threshold?: number | null;
+  current_value?: number | null;
+  currency?: string;
   acknowledged: boolean;
   acknowledged_at?: string;
   created_at: string;
@@ -142,6 +143,7 @@ export interface ExpenseCreate {
   category: string;
   description: string;
   receipt_url?: string;
+  incurred_at?: string; // optional per backend; not returned
 }
 
 export interface ExpenseOut {
@@ -336,4 +338,105 @@ export const financeApiService = {
   ): Promise<void> => {
     await api.delete(`/projects/${project_id}/expenses/${expense_id}`);
   },
+
+  // Invoices
+  draftInvoice: async (
+    project_id: string,
+    payload: InvoiceDraftRequest
+  ): Promise<InvoiceOut> => {
+    const response = await api.post(
+      `/projects/${project_id}/invoices/draft`,
+      payload
+    );
+    return response.data;
+  },
+
+  getInvoicePdf: async (invoice_id: string): Promise<Blob> => {
+    const response = await api.get(`/finance/invoices/${invoice_id}/pdf`, {
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
+  sendInvoice: async (
+    invoice_id: string,
+    to_email?: string
+  ): Promise<{ status: string }> => {
+    const params = new URLSearchParams();
+    if (to_email) params.append("to_email", to_email);
+    const response = await api.post(
+      `/finance/invoices/${invoice_id}/send?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  // Invoice listing
+  listInvoices: async (
+    project_id?: string,
+    status?: string
+  ): Promise<InvoiceOut[]> => {
+    const params = new URLSearchParams();
+    if (project_id) params.append("project_id", project_id);
+    if (status) params.append("status", status);
+    const response = await api.get(`/finance/invoices?${params.toString()}`);
+    return response.data;
+  },
+
+  listProjectInvoices: async (
+    project_id: string,
+    status?: string
+  ): Promise<InvoiceOut[]> => {
+    const params = new URLSearchParams();
+    if (status) params.append("status", status);
+    const response = await api.get(
+      `/projects/${project_id}/invoices?${params.toString()}`
+    );
+    return response.data;
+  },
 };
+
+// Invoice Types
+export interface InvoiceLineOut {
+  id: string;
+  description: string;
+  hours: number;
+  rate: number;
+  amount: number;
+}
+
+export interface InvoiceOut {
+  id: string;
+  organization_id: string;
+  project_id: string;
+  project_name?: string;
+  number: string;
+  status: string;
+  currency: string;
+  issue_date: string;
+  due_date?: string | null;
+  period_start?: string;
+  period_end?: string;
+  subtotal: number;
+  tax_total: number;
+  total: number;
+  total_hours?: number;
+  note?: string | null;
+  to_email?: string | null;
+  client_name?: string | null;
+  client_email?: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  lines: InvoiceLineOut[];
+}
+
+export interface InvoiceDraftRequest {
+  start?: string;
+  end?: string;
+  to_email?: string;
+  note?: string;
+  client_name?: string;
+  client_email?: string;
+  due_date?: string;
+  send_now?: boolean;
+}

@@ -371,13 +371,13 @@ export const createExpense = createAsyncThunk<
 );
 
 export const fetchExpenses = createAsyncThunk<
-  ExpenseOut[],
+  { project_id: string; expenses: ExpenseOut[] },
   string,
   { rejectValue: string }
 >("finance/fetchExpenses", async (projectId, { rejectWithValue }) => {
   try {
     const result = await financeApiService.listExpenses(projectId);
-    return result;
+    return { project_id: projectId, expenses: result };
   } catch (err: any) {
     const errorMessage = getErrorMessage(err);
     return rejectWithValue(errorMessage);
@@ -406,7 +406,7 @@ export const updateExpense = createAsyncThunk<
 );
 
 export const deleteExpense = createAsyncThunk<
-  void,
+  { project_id: string; expense_id: string },
   { project_id: string; expense_id: string },
   { rejectValue: string }
 >(
@@ -414,6 +414,7 @@ export const deleteExpense = createAsyncThunk<
   async ({ project_id, expense_id }, { rejectWithValue }) => {
     try {
       await financeApiService.deleteExpense(project_id, expense_id);
+      return { project_id, expense_id };
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);
       return rejectWithValue(errorMessage);
@@ -624,8 +625,7 @@ const financeSlice = createSlice({
       })
       .addCase(fetchExpenses.fulfilled, (state, action) => {
         state.expensesLoading = false;
-        // Note: We need the project_id to store expenses properly
-        // This would need to be passed in the action payload or handled differently
+        state.expenses[action.payload.project_id] = action.payload.expenses;
         state.expensesError = null;
       })
       .addCase(fetchExpenses.rejected, (state, action) => {
@@ -659,8 +659,11 @@ const financeSlice = createSlice({
       })
       .addCase(deleteExpense.fulfilled, (state, action) => {
         state.expensesLoading = false;
-        // Note: We need the project_id and expense_id to remove the expense
-        // This would need to be handled in the action creator
+        const { project_id, expense_id } = action.payload;
+        const list = state.expenses[project_id];
+        if (list) {
+          state.expenses[project_id] = list.filter((e) => e.id !== expense_id);
+        }
         state.expensesError = null;
       })
       .addCase(deleteExpense.rejected, (state, action) => {

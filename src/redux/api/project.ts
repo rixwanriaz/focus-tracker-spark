@@ -49,6 +49,7 @@ export interface ProjectMember {
   role: string;
   hourly_rate_override?: number;
   created_at: string;
+  joined_at?: string; // Add joined_at field for display
   user?: {
     id: string;
     email: string;

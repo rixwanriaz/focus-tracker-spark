@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Eye, ChevronDown, ChevronUp, DollarSign, Info, AlertCircle } from 'lucide-react';
+import { Eye, ChevronDown, ChevronUp, DollarSign, Info, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CreateProjectRequest } from '@/redux/api';
 import { 
@@ -28,6 +29,9 @@ import {
   type ProjectFormData,
   type ProjectValidationError 
 } from '@/validation/project';
+import { AppDispatch, RootState } from '@/redux/store';
+import { getOrganizationMembers } from '@/redux/slice/organizationSlice';
+import { getOrgIdFromToken } from '@/lib/jwt';
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -40,6 +44,19 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   onOpenChange,
   onCreateProject,
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Redux state
+  const { members, loadingMembers, error, currentOrganization } = useSelector((state: RootState) => ({
+    members: state.organization.members,
+    loadingMembers: state.organization.loadingMembers,
+    error: state.organization.error,
+    currentOrganization: state.organization.currentOrganization,
+  }));
+
+  // Also get user info from auth state for fallback
+  const { user } = useSelector((state: RootState) => state.auth);
+
   const [formData, setFormData] = useState<Partial<ProjectFormData>>({
     ...defaultProjectFormData,
     color: projectColors[0],
@@ -49,6 +66,80 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ProjectValidationError[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get organization ID with fallbacks (same as MembersTab)
+  const getOrganizationId = () => {
+    // Primary source: JWT token (most reliable)
+    const orgIdFromToken = getOrgIdFromToken();
+    
+    // Fallback to Redux state
+    const orgId = orgIdFromToken || 
+                  currentOrganization?.slug || 
+                  currentOrganization?.name || 
+                  (user as any)?.organization_id;
+
+    return orgId;
+  };
+
+  // Fetch organization members when dialog opens
+  useEffect(() => {
+    if (open) {
+      const orgId = getOrganizationId();
+      console.log('NewProjectDialog: Fetching organization members for orgId:', orgId);
+      if (orgId) {
+        dispatch(getOrganizationMembers(orgId));
+      } else {
+        console.warn('NewProjectDialog: No organization ID found');
+      }
+    }
+  }, [open, dispatch, currentOrganization?.slug, currentOrganization?.name]);
+
+  // Debug members data
+  useEffect(() => {
+    console.log('NewProjectDialog: Members state changed:', {
+      members,
+      loadingMembers,
+      error,
+      membersCount: members?.length || 0,
+      membersData: members
+    });
+  }, [members, loadingMembers, error]);
+
+  // Manual test function for debugging (can be removed later)
+  const testOrganizationMembersAPI = async () => {
+    const orgId = getOrganizationId();
+    console.log('Testing organization members API with orgId:', orgId);
+    
+    if (!orgId) {
+      console.error('No organization ID available for testing');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/organizations/${orgId}/members`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('API Response status:', response.status);
+      console.log('API Response headers:', response.headers);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('API Response data:', data);
+      } else {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('API Call failed:', error);
+    }
+  };
+
+  // Add test button for debugging (remove in production)
+  const showDebugButton = process.env.NODE_ENV === 'development';
 
   // Reset form when dialog is closed
   React.useEffect(() => {
@@ -124,6 +215,25 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   // Helper function to get error message for a field
   const getFieldError = (fieldName: string): string | undefined => {
     return validationErrors.find(error => error.field === fieldName)?.message;
+  };
+
+  // Helper text for invite members dropdown summary
+  const getMembersDisplayText = (): string => {
+    if (loadingMembers) return "Loading members...";
+    if (error) return "Error loading members";
+    if (!members || members.length === 0) return "No members available";
+
+    if (formData.inviteMembers) {
+      const selected = members.find(
+        (m) => m?.user?.id === formData.inviteMembers
+      );
+      if (selected?.user) {
+        return selected.user.full_name || selected.user.email || "1 selected";
+      }
+      return "1 selected";
+    }
+
+    return `${members.length} member${members.length === 1 ? "" : "s"} available`;
   };
 
   return (
@@ -320,19 +430,98 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
 
               {/* Invite Members */}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Invite Members
-                </Label>
-                <Select value={formData.inviteMembers || ''} onValueChange={(value) => setFormData({ ...formData, inviteMembers: value })}>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Invite Members
+                  </Label>
+                  <span className="text-xs text-gray-500">
+                    {getMembersDisplayText()}
+                  </span>
+                </div>
+                <Select 
+                  value={formData.inviteMembers || ''} 
+                  onValueChange={(value) => setFormData({ ...formData, inviteMembers: value })}
+                  disabled={loadingMembers || !members || members.length === 0}
+                >
                   <SelectTrigger className="bg-gray-900 border-gray-700 text-gray-400 h-10">
-                    <SelectValue placeholder="Select Team Member or Group" />
+                    <SelectValue placeholder={
+                      loadingMembers ? "Loading members..." : 
+                      error ? "Error loading members" :
+                      !members || members.length === 0 ? "No members available" :
+                      "Select Team Member or Group"
+                    } />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-gray-700">
-                    <SelectItem value="member1" className="text-gray-300">Team Member 1</SelectItem>
-                    <SelectItem value="member2" className="text-gray-300">Team Member 2</SelectItem>
-                    <SelectItem value="group1" className="text-gray-300">Development Team</SelectItem>
+                    {loadingMembers ? (
+                      <div className="flex items-center justify-center p-4 text-gray-400">
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Loading members...
+                      </div>
+                    ) : error ? (
+                      <div className="flex items-center justify-center p-4 text-red-400">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        <div className="text-xs">
+                          <div>Failed to load members</div>
+                          <div className="text-red-300 mt-1">{error}</div>
+                          <div className="text-gray-500 mt-2">
+                            You can still create the project and add members later.
+                          </div>
+                        </div>
+                      </div>
+                    ) : !members || members.length === 0 ? (
+                      <div className="flex items-center justify-center p-4 text-gray-400">
+                        <div className="text-xs text-center">
+                          <div>No members found</div>
+                          <div className="text-gray-500 mt-1">
+                            {members === null ? 'API returned null' : `Found ${members.length} members`}
+                          </div>
+                          <div className="text-gray-500 mt-2">
+                            You can still create the project and add members later.
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      members
+                        .filter(member => member && member.user)
+                        .map((member) => {
+                          if (!member || !member.user) {
+                            console.warn('Invalid member data:', member);
+                            return null;
+                          }
+                          return (
+                            <SelectItem 
+                              key={member.user.id} 
+                              value={member.user.id} 
+                              className="text-gray-300"
+                            >
+                              {member.user.full_name || member.user.email}
+                              {member.role && (
+                                <span className="ml-2 text-xs text-gray-500">
+                                  ({member.role})
+                                </span>
+                              )}
+                            </SelectItem>
+                          );
+                        })
+                    )}
                   </SelectContent>
                 </Select>
+                {(!members || members.length === 0) && !loadingMembers && (
+                  <p className="text-xs text-gray-500">
+                    💡 You can add members to this project after creation from the project settings.
+                  </p>
+                )}
+                {showDebugButton && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={testOrganizationMembersAPI}
+                    className="text-xs text-gray-400 border-gray-600 hover:text-white hover:border-gray-500"
+                  >
+                    🔧 Test API (Dev Only)
+                  </Button>
+                )}
               </div>
 
               {/* Access */}

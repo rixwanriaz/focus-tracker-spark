@@ -129,7 +129,7 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({
 
             {/* Days of week */}
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
+              {['S', 'M', 'T', 'W', 'R', 'F', 'S'].map((day) => (
                 <div key={day} className="text-xs font-medium text-gray-400 text-center py-2">
                   {day}
                 </div>

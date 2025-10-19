@@ -26,6 +26,8 @@ import Organization from "./pages/Organization";
 import Settings from "./pages/Settings";
 import AdminConsole from "./pages/AdminConsole";
 import UserProfile from "./pages/UserProfile";
+import Payouts from "./pages/Payouts";
+import FinanceAlerts from "./pages/FinanceAlerts";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +72,17 @@ const App = () => (
               } 
             />
             
+            {/* Manage */}
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:projectId" element={<ProjectDetail />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/billable-rates" element={<BillableRates />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/payouts" element={<Payouts />} />
+            <Route path="/alerts" element={<FinanceAlerts />} />
+            <Route path="/tags" element={<Tags />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/integrations" element={<Integrations />} />
             {/* Protected Routes - Manage */}
             <Route 
               path="/projects" 
@@ -108,6 +121,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Invoices />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/payouts" 
+              element={
+                <ProtectedRoute>
+                  <Payouts />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/alerts" 
+              element={
+                <ProtectedRoute>
+                  <FinanceAlerts />
                 </ProtectedRoute>
               } 
             />

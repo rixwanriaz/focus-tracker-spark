@@ -135,7 +135,8 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
   const filteredMembers = membersWithRates.filter(member =>
     member.user?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.user?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    member.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.user_email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getRoleBadgeColor = (role: string) => {
@@ -287,16 +288,20 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
                         <Avatar className="h-10 w-10 ring-2 ring-gray-700 group-hover:ring-purple-500/50 transition-all duration-200">
                           <AvatarImage src={undefined} />
                           <AvatarFallback className="bg-gradient-to-br from-purple-600 to-purple-700 text-white font-semibold">
-                            {member.user?.first_name?.charAt(0)}{member.user?.last_name?.charAt(0)}
+                            {member.user?.first_name?.charAt(0) || member.user_email?.charAt(0).toUpperCase()}
+                            {member.user?.last_name?.charAt(0) || member.user_email?.charAt(1).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
                       </div>
                       <div>
                         <div className="text-white font-semibold group-hover:text-purple-300 transition-colors">
-                          {member.user?.first_name} {member.user?.last_name}
+                          {member.user?.first_name && member.user?.last_name 
+                            ? `${member.user.first_name} ${member.user.last_name}`
+                            : member.user_email?.split('@')[0] || 'Unknown User'
+                          }
                         </div>
-                        <div className="text-gray-400 text-sm">{member.user?.email}</div>
+                        <div className="text-gray-400 text-sm">{member.user?.email || member.user_email}</div>
                       </div>
                     </div>
                     
@@ -320,7 +325,7 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
                     </div>
                     
                     <div className="flex items-center text-sm text-gray-300">
-                      {new Date(member.joined_at).toLocaleDateString()}
+                      {new Date(member.joined_at || member.created_at).toLocaleDateString()}
                     </div>
                     
                     <div className="flex items-center">
@@ -375,7 +380,10 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
           onOpenChange={setIsRateSetupDialogOpen}
           projectId={projectId}
           userId={selectedMember.user_id}
-          userName={`${selectedMember.user?.first_name} ${selectedMember.user?.last_name}`}
+          userName={selectedMember.user?.first_name && selectedMember.user?.last_name 
+            ? `${selectedMember.user.first_name} ${selectedMember.user.last_name}`
+            : selectedMember.user_email?.split('@')[0] || 'Unknown User'
+          }
           currentRate={selectedMember.hourly_rate}
           onSuccess={handleRateSetupSuccess}
         />

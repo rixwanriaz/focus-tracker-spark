@@ -15,6 +15,7 @@ import {
   Users,
   UsersRound,
   FileText,
+  AlertCircle,
   Tag,
   Target,
   Link,
@@ -111,7 +112,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       { icon: UsersRound, label: 'Members', path: '/organization?tab=members' },
       { icon: DollarSign, label: 'Billable rates', path: '/billable-rates' },
       { icon: FileText, label: 'Invoices', path: '/invoices' },
+      { icon: DollarSign, label: 'Payouts', path: '/payouts' },
       // { icon: Tag, label: 'Tags', path: '/tags' },
+      { icon: AlertCircle, label: 'Finance Alerts', path: '/alerts' },
       // { icon: Target, label: 'Goals', beta: true, path: '/goals' },
       // { icon: Link, label: 'Integrations', path: '/integrations' }
     ],
