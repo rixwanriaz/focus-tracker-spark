@@ -1,13 +1,24 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
 import { loginUser } from "@/redux/slice/authSlice";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.auth);
+  const { loading, isAuthenticated } = useAppSelector((state) => state.auth);
+  
+  // Get the page they were trying to access, or default to /timer
+  const from = (location.state as any)?.from?.pathname || "/timer";
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
   
   const [formData, setFormData] = useState({
     email: "",
@@ -39,7 +50,8 @@ const LoginPage: React.FC = () => {
       const result = await dispatch(loginUser(payload)).unwrap();
       
       toast.success("Login successful!");
-      navigate("/timer");
+      // Navigate to the page they were trying to access, or /timer
+      navigate(from, { replace: true });
     } catch (error: any) {
       // Handle login error
       

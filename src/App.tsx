@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
+import { ProtectedRoute } from "./components/Auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -36,35 +37,148 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             
-            {/* Track */}
-            <Route path="/timer" element={<Timer />} />
+            {/* Protected Routes - Track */}
+            <Route 
+              path="/timer" 
+              element={
+                <ProtectedRoute>
+                  <Timer />
+                </ProtectedRoute>
+              } 
+            />
             
-            {/* Analyze */}
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/approvals" element={<Approvals />} />
+            {/* Protected Routes - Analyze */}
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedRoute>
+                  <Reports />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/approvals" 
+              element={
+                <ProtectedRoute>
+                  <Approvals />
+                </ProtectedRoute>
+              } 
+            />
             
-            {/* Manage */}
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/:projectId" element={<ProjectDetail />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/billable-rates" element={<BillableRates />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/tags" element={<Tags />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/integrations" element={<Integrations />} />
+            {/* Protected Routes - Manage */}
+            <Route 
+              path="/projects" 
+              element={
+                <ProtectedRoute>
+                  <Projects />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/projects/:projectId" 
+              element={
+                <ProtectedRoute>
+                  <ProjectDetail />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clients" 
+              element={
+                <ProtectedRoute>
+                  <Clients />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/billable-rates" 
+              element={
+                <ProtectedRoute>
+                  <BillableRates />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/invoices" 
+              element={
+                <ProtectedRoute>
+                  <Invoices />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tags" 
+              element={
+                <ProtectedRoute>
+                  <Tags />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/goals" 
+              element={
+                <ProtectedRoute>
+                  <Goals />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/integrations" 
+              element={
+                <ProtectedRoute>
+                  <Integrations />
+                </ProtectedRoute>
+              } 
+            />
             
-            {/* Admin */}
-            <Route path="/subscription" element={<Subscription />} />
-            <Route path="/organization" element={<Organization />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/admin-console" element={<AdminConsole />} />
+            {/* Protected Routes - Admin */}
+            <Route 
+              path="/subscription" 
+              element={
+                <ProtectedRoute>
+                  <Subscription />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/organization" 
+              element={
+                <ProtectedRoute>
+                  <Organization />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin-console" 
+              element={
+                <ProtectedRoute>
+                  <AdminConsole />
+                </ProtectedRoute>
+              } 
+            />
             
-            {/* User */}
-            <Route path="/profile" element={<UserProfile />} />
+            {/* Protected Routes - User */}
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

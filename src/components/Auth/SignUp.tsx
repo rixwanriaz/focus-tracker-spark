@@ -67,12 +67,13 @@ const SignupPage: React.FC = () => {
 
       const result = await dispatch(registerUser(payload)).unwrap();
       
-      toast.success("Registration successful!");
+      toast.success("Registration successful! Please login to continue.");
       
-      // Add 2-3 second delay with loader before navigation
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      // Add a brief delay before redirecting to login
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // navigate("/timer");
+      // Redirect to login page
+      navigate("/login");
     } catch (error: any) {
       console.error("❌ Registration failed - Full error:", error);
       console.error("❌ Error detail:", error?.detail);
