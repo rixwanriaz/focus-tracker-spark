@@ -12,6 +12,7 @@ import { projectApiService, Project as ApiProject, CreateProjectRequest } from '
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { toast } from 'sonner';
+import PermissionGate from '@/components/ui/PermissionGate';
 
 const Projects: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -43,11 +44,7 @@ const Projects: React.FC = () => {
         const displayProjects = apiProjects.map(project => ({
           id: project.id,
           name: project.name,
-          client: undefined, // Client info will be handled by backend
           timeframe: project.end_date ? new Date(project.end_date).toLocaleDateString() : undefined,
-          timeStatus: 0, // TODO: Get from time tracking API
-          billableStatus: 'billable' as const, // TODO: Determine from project settings
-          team: [], // TODO: Get from project members API
           pinned: false, // TODO: Add to API response
           archived: !project.is_active,
           color: '#8b5cf6', // TODO: Add to API response
@@ -76,11 +73,7 @@ const Projects: React.FC = () => {
       const newDisplayProject: Project = {
         id: newApiProject.id,
         name: newApiProject.name,
-        client: undefined, // Client info will be handled by backend
         timeframe: newApiProject.end_date ? new Date(newApiProject.end_date).toLocaleDateString() : undefined,
-        timeStatus: 0,
-        billableStatus: 'billable',
-        team: [],
         pinned: false,
         archived: !newApiProject.is_active,
         color: '#8b5cf6',
@@ -154,13 +147,15 @@ const Projects: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-6 border-b border-gray-800">
           <h1 className="text-2xl font-bold">Projects</h1>
-          <Button
-            onClick={() => setDialogOpen(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New project
-          </Button>
+          <PermissionGate permission="projects:write">
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New project
+            </Button>
+          </PermissionGate>
         </div>
 
         {/* Filters */}

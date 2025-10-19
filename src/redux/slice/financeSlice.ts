@@ -13,6 +13,8 @@ import type {
   FinanceAlertAckRequest,
   ExpenseCreate,
   ExpenseOut,
+  MyProjectCostOut,
+  ProjectUserCostsOut,
 } from "../api/finance";
 
 // Finance State Interface
@@ -41,6 +43,12 @@ interface FinanceState {
   expenses: Record<string, ExpenseOut[]>; // project_id -> expenses[]
   expensesLoading: boolean;
   expensesError: string | null;
+
+  // Per-user costs
+  myProjectCost: Record<string, MyProjectCostOut | undefined>; // key: `${project_id}|${start}|${end}`
+  projectUserCosts: Record<string, ProjectUserCostsOut | undefined>; // key: `${project_id}|${start}|${end}`
+  perUserCostsLoading: boolean;
+  perUserCostsError: string | null;
 
   // General loading and error states
   loading: boolean;
@@ -72,6 +80,12 @@ const initialState: FinanceState = {
   expenses: {},
   expensesLoading: false,
   expensesError: null,
+
+  // Per-user costs
+  myProjectCost: {},
+  projectUserCosts: {},
+  perUserCostsLoading: false,
+  perUserCostsError: null,
 
   // General states
   loading: false,
@@ -210,6 +224,43 @@ export const recomputeProjectFinancials = createAsyncThunk<
         projectId
       );
       return result;
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Async Thunks for Per-User Project Costs
+export const fetchMyProjectCost = createAsyncThunk<
+  { key: string; data: MyProjectCostOut },
+  { project_id: string; start?: string; end?: string },
+  { rejectValue: string }
+>(
+  "finance/fetchMyProjectCost",
+  async ({ project_id, start, end }, { rejectWithValue }) => {
+    try {
+      const data = await financeApiService.getMyProjectCost(project_id, start, end);
+      const key = `${project_id}|${start || ''}|${end || ''}`;
+      return { key, data };
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const fetchProjectUserCosts = createAsyncThunk<
+  { key: string; data: ProjectUserCostsOut },
+  { project_id: string; start?: string; end?: string },
+  { rejectValue: string }
+>(
+  "finance/fetchProjectUserCosts",
+  async ({ project_id, start, end }, { rejectWithValue }) => {
+    try {
+      const data = await financeApiService.getProjectUserCosts(project_id, start, end);
+      const key = `${project_id}|${start || ''}|${end || ''}`;
+      return { key, data };
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);
       return rejectWithValue(errorMessage);
@@ -615,6 +666,34 @@ const financeSlice = createSlice({
       .addCase(deleteExpense.rejected, (state, action) => {
         state.expensesLoading = false;
         state.expensesError = action.payload || "Failed to delete expense";
+      })
+
+      // Per-User Costs
+      .addCase(fetchMyProjectCost.pending, (state) => {
+        state.perUserCostsLoading = true;
+        state.perUserCostsError = null;
+      })
+      .addCase(fetchMyProjectCost.fulfilled, (state, action) => {
+        state.perUserCostsLoading = false;
+        state.myProjectCost[action.payload.key] = action.payload.data;
+        state.perUserCostsError = null;
+      })
+      .addCase(fetchMyProjectCost.rejected, (state, action) => {
+        state.perUserCostsLoading = false;
+        state.perUserCostsError = action.payload || "Failed to fetch my project cost";
+      })
+      .addCase(fetchProjectUserCosts.pending, (state) => {
+        state.perUserCostsLoading = true;
+        state.perUserCostsError = null;
+      })
+      .addCase(fetchProjectUserCosts.fulfilled, (state, action) => {
+        state.perUserCostsLoading = false;
+        state.projectUserCosts[action.payload.key] = action.payload.data;
+        state.perUserCostsError = null;
+      })
+      .addCase(fetchProjectUserCosts.rejected, (state, action) => {
+        state.perUserCostsLoading = false;
+        state.perUserCostsError = action.payload || "Failed to fetch project user costs";
       });
   },
 });

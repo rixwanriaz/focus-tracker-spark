@@ -1,7 +1,14 @@
 // src/redux/slice/authSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { authApiService } from "../api/auth";
-import type { RegisterRequest, LoginRequest, AuthResponse } from "../api/auth";
+import type { 
+  RegisterRequest, 
+  LoginRequest, 
+  AuthResponse, 
+  UserProfile, 
+  UpdateUserProfileRequest, 
+  UserPermissions 
+} from "../api/auth";
 
 interface AuthState {
   accessToken: string | null;
@@ -11,13 +18,10 @@ interface AuthState {
   expiresIn: number | null;
   loading: boolean;
   error: string | null;
-  user?: {
-    id: string;
-    email: string;
-    first_name?: string;
-    last_name?: string;
-    organization_id?: string;
-  };
+  user?: UserProfile;
+  permissions?: string[];
+  profileLoading: boolean;
+  permissionsLoading: boolean;
 }
 
 const initialState: AuthState = {
@@ -28,6 +32,8 @@ const initialState: AuthState = {
   expiresIn: null,
   loading: false,
   error: null,
+  profileLoading: false,
+  permissionsLoading: false,
 };
 
 // Helper function to extract error messages
@@ -139,6 +145,48 @@ export const logoutUser = createAsyncThunk<
   }
 });
 
+export const fetchUserProfile = createAsyncThunk<
+  UserProfile,
+  void,
+  { rejectValue: string }
+>("auth/fetchUserProfile", async (_, { rejectWithValue }) => {
+  try {
+    const result = await authApiService.getUserProfile();
+    return result;
+  } catch (err: any) {
+    const errorMessage = getErrorMessage(err);
+    return rejectWithValue(errorMessage);
+  }
+});
+
+export const updateUserProfile = createAsyncThunk<
+  UserProfile,
+  UpdateUserProfileRequest,
+  { rejectValue: string }
+>("auth/updateUserProfile", async (data, { rejectWithValue }) => {
+  try {
+    const result = await authApiService.updateUserProfile(data);
+    return result;
+  } catch (err: any) {
+    const errorMessage = getErrorMessage(err);
+    return rejectWithValue(errorMessage);
+  }
+});
+
+export const fetchUserPermissions = createAsyncThunk<
+  string[],
+  void,
+  { rejectValue: string }
+>("auth/fetchUserPermissions", async (_, { rejectWithValue }) => {
+  try {
+    const result = await authApiService.getUserPermissions();
+    return result.permissions;
+  } catch (err: any) {
+    const errorMessage = getErrorMessage(err);
+    return rejectWithValue(errorMessage);
+  }
+});
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -149,7 +197,10 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.expiresIn = null;
       state.user = undefined;
+      state.permissions = undefined;
       state.loading = false;
+      state.profileLoading = false;
+      state.permissionsLoading = false;
       state.error = null;
 
       // Clear from localStorage
@@ -292,6 +343,51 @@ const authSlice = createSlice({
         // Clear from localStorage
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+      })
+
+      // Fetch User Profile
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.profileLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.profileLoading = false;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.profileLoading = false;
+        state.error = action.payload || "Failed to fetch user profile";
+      })
+
+      // Update User Profile
+      .addCase(updateUserProfile.pending, (state) => {
+        state.profileLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.profileLoading = false;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.profileLoading = false;
+        state.error = action.payload || "Failed to update user profile";
+      })
+
+      // Fetch User Permissions
+      .addCase(fetchUserPermissions.pending, (state) => {
+        state.permissionsLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserPermissions.fulfilled, (state, action) => {
+        state.permissionsLoading = false;
+        state.permissions = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchUserPermissions.rejected, (state, action) => {
+        state.permissionsLoading = false;
+        state.error = action.payload || "Failed to fetch user permissions";
       });
   },
 });

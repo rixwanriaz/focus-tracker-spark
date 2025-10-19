@@ -45,8 +45,10 @@ export interface ProjectMember {
   id: string;
   user_id: string;
   project_id: string;
+  user_email: string;
   role: string;
-  joined_at: string;
+  hourly_rate_override?: number;
+  created_at: string;
   user?: {
     id: string;
     email: string;

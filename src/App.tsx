@@ -24,6 +24,7 @@ import Subscription from "./pages/Subscription";
 import Organization from "./pages/Organization";
 import Settings from "./pages/Settings";
 import AdminConsole from "./pages/AdminConsole";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,9 @@ const App = () => (
             <Route path="/organization" element={<Organization />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin-console" element={<AdminConsole />} />
+            
+            {/* User */}
+            <Route path="/profile" element={<UserProfile />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

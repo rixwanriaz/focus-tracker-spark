@@ -10,11 +10,7 @@ import { Project as ApiProject } from "@/redux/api";
 export interface Project {
   id: string;
   name: string;
-  client?: string;
   timeframe?: string;
-  timeStatus: number; // in hours
-  billableStatus?: "billable" | "non-billable";
-  team?: string[];
   pinned: boolean;
   archived: boolean;
   color?: string;
@@ -24,11 +20,7 @@ export interface Project {
 export const adaptApiProjectToDisplay = (apiProject: ApiProject): Project => ({
   id: apiProject.id,
   name: apiProject.name,
-  client: undefined, // Client info will be handled by backend
   timeframe: apiProject.end_date ? new Date(apiProject.end_date).toLocaleDateString() : undefined,
-  timeStatus: 0, // This would come from time tracking API
-  billableStatus: 'billable', // This would be determined by project settings
-  team: [], // This would come from project members API
   pinned: false, // This would need to be added to the API
   archived: false, // This would need to be added to the API
   color: '#8b5cf6', // This would need to be added to the API
@@ -42,7 +34,7 @@ interface ProjectsTableProps {
   selectedProjects?: string[];
 }
 
-type SortField = "name" | "client" | "timeframe" | "pinned";
+type SortField = "name" | "timeframe" | "pinned";
 type SortDirection = "asc" | "desc";
 
 export const ProjectsTable: React.FC<ProjectsTableProps> = ({
@@ -72,9 +64,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       case "name":
         comparison = a.name.localeCompare(b.name);
         break;
-      case "client":
-        comparison = (a.client || "").localeCompare(b.client || "");
-        break;
       case "timeframe":
         comparison = (a.timeframe || "").localeCompare(b.timeframe || "");
         break;
@@ -86,16 +75,10 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
     return sortDirection === "asc" ? comparison : -comparison;
   });
 
-  const formatTimeStatus = (hours: number): string => {
-    if (hours === 0) return "0 h";
-    if (hours < 1) return `${Math.round(hours * 60)} min`;
-    return `${hours} h`;
-  };
-
   return (
     <div className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
       {/* Table Header */}
-      <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-950 border-b border-gray-800 text-xs font-semibold text-gray-400 uppercase">
+      <div className="grid grid-cols-6 gap-4 px-4 py-3 bg-gray-950 border-b border-gray-800 text-xs font-semibold text-gray-400 uppercase">
         <div className="col-span-1 flex items-center">
           <Checkbox className="border-gray-600" />
         </div>
@@ -110,17 +93,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
           </button>
         </div>
 
-        <div className="col-span-2 flex items-center gap-2">
-          <button
-            onClick={() => handleSort("client")}
-            className="flex items-center gap-1 hover:text-gray-300 transition-colors"
-          >
-            CLIENT
-            <ArrowUpDown className="h-3 w-3" />
-          </button>
-        </div>
-
-        <div className="col-span-2 flex items-center gap-2">
+        <div className="col-span-1 flex items-center gap-2">
           <button
             onClick={() => handleSort("timeframe")}
             className="flex items-center gap-1 hover:text-gray-300 transition-colors"
@@ -129,10 +102,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
             <ArrowUpDown className="h-3 w-3" />
           </button>
         </div>
-
-        <div className="col-span-1 flex items-center">TIME STATUS</div>
-        <div className="col-span-1 flex items-center">BILLABLE STATUS</div>
-        <div className="col-span-1 flex items-center">TEAM</div>
 
         <div className="col-span-1 flex items-center gap-2">
           <button
@@ -160,7 +129,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
           sortedProjects.map((project) => (
             <div
               key={project.id}
-              className="grid grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-800/50 transition-colors"
+              className="grid grid-cols-6 gap-4 px-4 py-4 hover:bg-gray-800/50 transition-colors"
             >
               <div className="col-span-1 flex items-center">
                 <Checkbox
@@ -183,55 +152,8 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                 </span>
               </div>
 
-              <div className="col-span-2 flex items-center text-sm text-gray-400">
-                {project.client || "-"}
-              </div>
-
-              <div className="col-span-2 flex items-center text-sm text-gray-400">
+              <div className="col-span-1 flex items-center text-sm text-gray-400">
                 {project.timeframe || "-"}
-              </div>
-
-              <div className="col-span-1 flex items-center text-sm text-white">
-                {formatTimeStatus(project.timeStatus)}
-              </div>
-
-              <div className="col-span-1 flex items-center text-sm text-gray-400">
-                {project.billableStatus ? (
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-xs",
-                      project.billableStatus === "billable"
-                        ? "bg-green-900/30 text-green-400"
-                        : "bg-gray-800 text-gray-400"
-                    )}
-                  >
-                    {project.billableStatus}
-                  </span>
-                ) : (
-                  "-"
-                )}
-              </div>
-
-              <div className="col-span-1 flex items-center text-sm text-gray-400">
-                {project.team && project.team.length > 0 ? (
-                  <div className="flex -space-x-2">
-                    {project.team.slice(0, 3).map((member, idx) => (
-                      <div
-                        key={idx}
-                        className="w-6 h-6 rounded-full bg-purple-600 border-2 border-gray-900 flex items-center justify-center text-xs text-white font-medium"
-                      >
-                        {member.charAt(0).toUpperCase()}
-                      </div>
-                    ))}
-                    {project.team.length > 3 && (
-                      <div className="w-6 h-6 rounded-full bg-gray-700 border-2 border-gray-900 flex items-center justify-center text-xs text-gray-300">
-                        +{project.team.length - 3}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  "-"
-                )}
               </div>
 
               <div className="col-span-1 flex items-center">

@@ -53,11 +53,22 @@ export interface EmailVerificationRequest {
 export interface UserProfile {
   id: string;
   email: string;
-  first_name?: string;
-  last_name?: string;
+  full_name?: string;
+  email_verified: boolean;
+  is_superuser: boolean;
   organization_id?: string;
-  created_at: string;
-  updated_at: string;
+  preferred_locale?: string;
+  profile_picture_url?: string;
+}
+
+export interface UpdateUserProfileRequest {
+  full_name?: string;
+  preferred_locale?: string;
+  profile_picture_url?: string;
+}
+
+export interface UserPermissions {
+  permissions: string[];
 }
 
 // Auth API service functions
@@ -109,8 +120,20 @@ export const authApiService = {
   },
 
   // 8. Get User Profile
-  // getUserProfile: async (): Promise<UserProfile> => {
-  //   const response = await api.get(API_CONFIG.ENDPOINTS.USER.PROFILE);
-  //   return response.data;
-  // },
+  getUserProfile: async (): Promise<UserProfile> => {
+    const response = await api.get(API_CONFIG.ENDPOINTS.USER.PROFILE);
+    return response.data;
+  },
+
+  // 9. Update User Profile
+  updateUserProfile: async (data: UpdateUserProfileRequest): Promise<UserProfile> => {
+    const response = await api.patch(API_CONFIG.ENDPOINTS.USER.UPDATE, data);
+    return response.data;
+  },
+
+  // 10. Get User Permissions
+  getUserPermissions: async (): Promise<UserPermissions> => {
+    const response = await api.get(API_CONFIG.ENDPOINTS.USER.PERMISSIONS);
+    return response.data;
+  },
 };

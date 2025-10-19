@@ -72,18 +72,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Helper function to get user initials
   const getUserInitials = () => {
     if (!user) return 'U';
-    const firstInitial = user.first_name?.charAt(0)?.toUpperCase() || '';
-    const lastInitial = user.last_name?.charAt(0)?.toUpperCase() || '';
-    return firstInitial + lastInitial || user.email?.charAt(0)?.toUpperCase() || 'U';
+    if (user.full_name) {
+      return user.full_name
+        .split(' ')
+        .map(word => word.charAt(0))
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return user.email?.charAt(0)?.toUpperCase() || 'U';
   };
 
   // Helper function to get user display name
   const getUserDisplayName = () => {
     if (!user) return 'User';
-    if (user.first_name || user.last_name) {
-      return `${user.first_name || ''} ${user.last_name || ''}`.trim();
-    }
-    return user.email || 'User';
+    return user.full_name || user.email || 'User';
   };
 
   // Helper function to get organization display name (truncated)
@@ -243,17 +246,29 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Toggle & Profile */}
       <div className="border-t border-gray-800 p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          <button 
+            onClick={() => handleNavigate('/profile')}
+            className="flex items-center hover:bg-gray-800 rounded-lg p-1 transition-colors group flex-1"
+          >
             <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
               {getUserInitials()}
             </div>
-            {!isCollapsed && <span className="ml-3 text-sm font-medium text-gray-300">{getUserDisplayName()}</span>}
-          </div>
+            {!isCollapsed && (
+              <div className="ml-3 text-left">
+                <div className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+                  {getUserDisplayName()}
+                </div>
+                <div className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors">
+                  View Profile
+                </div>
+              </div>
+            )}
+          </button>
           {/* Only show collapse button when not on mobile (when onNavigate is not provided) */}
           {!onNavigate && (
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)} 
-              className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-gray-800 rounded-lg"
+              className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-gray-800 rounded-lg ml-2"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}

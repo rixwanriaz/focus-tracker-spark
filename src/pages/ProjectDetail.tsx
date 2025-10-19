@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/Layout";
 import { NewTaskDialog, TaskFiltersComponent, TaskTable } from "@/components/Tasks";
 import { ProjectMembersTab } from "@/components/Projects";
+import { ProjectUserCostsTab } from "@/components/Finance";
 import { RootState, AppDispatch } from "@/redux/store";
 import {
   getProjectById,
@@ -34,10 +35,12 @@ const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
+
   // Redux state
-  const { currentProject, projectMembers, projectOverview, loading: projectLoading } = useSelector(
+  const { currentProject, projectMembers, projectOverview, loading: projectLoading, loadingMembers } = useSelector(
     (state: RootState) => state.project
   );
+
   const { projectTasks, loading: tasksLoading, creating, updating, filters, error: taskError } = useSelector(
     (state: RootState) => state.task
   );
@@ -50,7 +53,9 @@ const ProjectDetail: React.FC = () => {
   useEffect(() => {
     if (projectId) {
       dispatch(getProjectById(projectId));
-      dispatch(getProjectMembers(projectId));
+      dispatch(getProjectMembers(projectId)).catch(error => {
+        console.error("Failed to load project members:", error);
+      });
       dispatch(getProjectOverview(projectId));
       dispatch(getProjectTasks({ projectId }));
     }
@@ -151,9 +156,9 @@ const ProjectDetail: React.FC = () => {
   // Format project members for task assignment
   const assignees = projectMembers.map(member => ({
     id: member.user_id,
-    first_name: member.user?.first_name || "",
-    last_name: member.user?.last_name || "",
+    email: member.user_email,
   }));
+
 
   if (projectLoading) {
     return (
@@ -284,11 +289,12 @@ const ProjectDetail: React.FC = () => {
         {/* Main Content */}
         <div className="px-6 pb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800 border-gray-700">
+            <TabsList className="grid w-full grid-cols-5 bg-gray-800 border-gray-700">
               <TabsTrigger value="tasks" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Tasks</TabsTrigger>
               <TabsTrigger value="overview" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Overview</TabsTrigger>
               <TabsTrigger value="members" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Members</TabsTrigger>
               <TabsTrigger value="timeline" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Timeline</TabsTrigger>
+              <TabsTrigger value="costs" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Costs</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tasks" className="mt-6">
@@ -336,6 +342,12 @@ const ProjectDetail: React.FC = () => {
                       projectId={projectId!}
                       onCreateTask={handleCreateTask}
                       assignees={assignees}
+                      assigneesLoading={loadingMembers}
+                      onEnsureAssignees={() => {
+                        if (projectId) {
+                          dispatch(getProjectMembers(projectId));
+                        }
+                      }}
                       loading={creating}
                     />
                   </div>
@@ -411,6 +423,10 @@ const ProjectDetail: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="costs" className="mt-6">
+              <ProjectUserCostsTab projectId={projectId!} />
             </TabsContent>
           </Tabs>
         </div>

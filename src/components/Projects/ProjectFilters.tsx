@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, User, Users, DollarSign, FileText, Layout, Search } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,13 +14,6 @@ interface ProjectFiltersProps {
   onShowArchivedChange: (show: boolean) => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
-  activeFilters?: {
-    client?: string;
-    member?: string;
-    billable?: boolean;
-    projectName?: string;
-    template?: string;
-  };
 }
 
 export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
@@ -28,7 +21,6 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
   onShowArchivedChange,
   searchQuery = '',
   onSearchChange,
-  activeFilters = {},
 }) => {
   const filterOptions = [
     { key: 'all', label: 'Show All' },
@@ -75,67 +67,6 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {/* Filters Label */}
-      <span className="text-sm text-gray-500 uppercase font-semibold">Filters:</span>
-
-      {/* Filter Chips */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          className={`bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white ${
-            activeFilters.client ? 'border-purple-600 text-purple-400' : ''
-          }`}
-        >
-          <User className="mr-2 h-4 w-4" />
-          Client
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className={`bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white ${
-            activeFilters.member ? 'border-purple-600 text-purple-400' : ''
-          }`}
-        >
-          <Users className="mr-2 h-4 w-4" />
-          Member
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className={`bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white ${
-            activeFilters.billable !== undefined ? 'border-purple-600 text-purple-400' : ''
-          }`}
-        >
-          <DollarSign className="mr-2 h-4 w-4" />
-          Billable
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className={`bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white ${
-            activeFilters.projectName ? 'border-purple-600 text-purple-400' : ''
-          }`}
-        >
-          <FileText className="mr-2 h-4 w-4" />
-          Project name
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className={`bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white ${
-            activeFilters.template ? 'border-purple-600 text-purple-400' : ''
-          }`}
-        >
-          <Layout className="mr-2 h-4 w-4" />
-          Template
-        </Button>
-      </div>
     </div>
   );
 };

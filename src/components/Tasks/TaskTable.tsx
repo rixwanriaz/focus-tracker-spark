@@ -105,7 +105,15 @@ export const TaskTable: React.FC<TaskTableProps> = ({
 
   const handleEditSave = (taskId: string) => {
     if (editData.title?.trim()) {
-      onUpdate?.(taskId, editData);
+      // Clean up edit data - convert empty strings to undefined for optional fields
+      const cleanedEditData = {
+        title: editData.title.trim(),
+        description: editData.description?.trim() || undefined,
+        priority: editData.priority,
+        due_date: editData.due_date || undefined,
+      };
+      
+      onUpdate?.(taskId, cleanedEditData);
       setEditingTask(null);
       setEditData({});
     }

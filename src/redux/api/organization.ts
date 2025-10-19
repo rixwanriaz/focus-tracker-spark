@@ -1,6 +1,5 @@
 import axios from "axios";
 import { API_CONFIG } from "@/config/api.config";
-import { store } from "../store";
 
 // Types for organization API
 export interface Organization {
@@ -83,9 +82,8 @@ const organizationApi = axios.create({
 // Add request interceptor to include auth token
 organizationApi.interceptors.request.use(
   (config) => {
-    // Get token from Redux state instead of localStorage
-    const state = store.getState();
-    const token = state.auth?.accessToken;
+    // Get token from localStorage
+    const token = localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -103,8 +101,8 @@ export const organizationApiService = {
     data: CreateOrganizationRequest,
     token?: string
   ): Promise<CreateOrganizationResponse> => {
-    // Use provided token or fall back to Redux state
-    const authToken = token || store.getState().auth?.accessToken;
+    // Use provided token or fall back to localStorage
+    const authToken = token || localStorage.getItem("access_token");
 
     if (!authToken) {
       throw new Error("No authentication token available");

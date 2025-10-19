@@ -107,6 +107,34 @@ export interface FinanceAlertAckRequest {
   notes?: string;
 }
 
+// Per-User Project Cost Types
+export interface MyProjectCostOut {
+  project_id: string;
+  user_id: string;
+  start?: string;
+  end?: string;
+  hours: number;
+  cost: number;
+  currency: string;
+}
+
+export interface ProjectUserCostItem {
+  user_id: string;
+  hours: number;
+  cost: number;
+  currency: string;
+}
+
+export interface ProjectUserCostsOut {
+  project_id: string;
+  start?: string;
+  end?: string;
+  currency: string;
+  total_hours: number;
+  total_cost: number;
+  users: ProjectUserCostItem[];
+}
+
 // Expense Types
 export interface ExpenseCreate {
   amount: number;
@@ -218,6 +246,37 @@ export const financeApiService = {
       {
         responseType: "blob",
       }
+    );
+    return response.data;
+  },
+
+  // Per-User Costs Endpoints
+  getMyProjectCost: async (
+    project_id: string,
+    start?: string,
+    end?: string
+  ): Promise<MyProjectCostOut> => {
+    const params = new URLSearchParams();
+    if (start) params.append("start", start);
+    if (end) params.append("end", end);
+
+    const response = await api.get(
+      `/projects/${project_id}/my-cost?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  getProjectUserCosts: async (
+    project_id: string,
+    start?: string,
+    end?: string
+  ): Promise<ProjectUserCostsOut> => {
+    const params = new URLSearchParams();
+    if (start) params.append("start", start);
+    if (end) params.append("end", end);
+
+    const response = await api.get(
+      `/projects/${project_id}/user-costs?${params.toString()}`
     );
     return response.data;
   },
