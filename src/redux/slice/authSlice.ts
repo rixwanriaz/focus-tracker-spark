@@ -236,7 +236,11 @@ const authSlice = createSlice({
           state.tokenType = action.payload.token_type;
           state.expiresIn = action.payload.expires_in;
           state.isAuthenticated = true;
-          state.user = action.payload.user;
+          state.user = {
+            ...action.payload.user,
+            email_verified: false, // Set default value
+            is_superuser: false // Set default value
+          };
           state.error = null;
 
           // Persist to localStorage
@@ -264,7 +268,11 @@ const authSlice = createSlice({
           state.tokenType = action.payload.token_type;
           state.expiresIn = action.payload.expires_in;
           state.isAuthenticated = true;
-          state.user = action.payload.user;
+          state.user = {
+            ...action.payload.user,
+            email_verified: false, // Set default value
+            is_superuser: false // Set default value
+          };
           state.error = null;
 
           // Persist to localStorage
@@ -291,7 +299,11 @@ const authSlice = createSlice({
           state.refreshToken = action.payload.refresh_token;
           state.tokenType = action.payload.token_type;
           state.expiresIn = action.payload.expires_in;
-          state.user = action.payload.user;
+          state.user = {
+            ...action.payload.user,
+            email_verified: false, // Set default value
+            is_superuser: false // Set default value
+          };
           state.error = null;
 
           // Persist to localStorage

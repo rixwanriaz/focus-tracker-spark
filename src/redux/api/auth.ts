@@ -126,7 +126,9 @@ export const authApiService = {
   },
 
   // 9. Update User Profile
-  updateUserProfile: async (data: UpdateUserProfileRequest): Promise<UserProfile> => {
+  updateUserProfile: async (
+    data: UpdateUserProfileRequest
+  ): Promise<UserProfile> => {
     const response = await api.patch(API_CONFIG.ENDPOINTS.USER.UPDATE, data);
     return response.data;
   },

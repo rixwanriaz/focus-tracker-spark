@@ -157,39 +157,7 @@ const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="flex items-center my-6">
-          <hr className="flex-1 border-gray-700" />
-          <span className="px-2 text-sm text-gray-400">OR LOG IN WITH</span>
-          <hr className="flex-1 border-gray-700" />
-        </div>
-
-        {/* Social Logins */}
-        <div className="space-y-3">
-          <button className="w-full py-2 rounded-md bg-neutral-800 border border-gray-700 flex items-center justify-center gap-2 hover:bg-neutral-700 transition">
-            <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-              className="w-5 h-5"
-            />
-            Google
-          </button>
-          <button className="w-full py-2 rounded-md bg-neutral-800 border border-gray-700 flex items-center justify-center gap-2 hover:bg-neutral-700 transition">
-            <img
-              src="https://www.svgrepo.com/show/475633/apple.svg"
-              alt="Apple"
-              className="w-5 h-5"
-            />
-            Apple
-          </button>
-          <button className="w-full py-2 rounded-md bg-neutral-800 border border-gray-700 flex items-center justify-center gap-2 hover:bg-neutral-700 transition">
-            <span>🔑</span>
-            Passkey
-          </button>
-          <button className="w-full py-2 rounded-md bg-neutral-800 border border-gray-700 flex items-center justify-center gap-2 hover:bg-neutral-700 transition">
-            ☁️ SSO
-          </button>
-        </div>
+       
 
         {/* Signup */}
         <p className="text-center text-sm text-gray-400 mt-6">
