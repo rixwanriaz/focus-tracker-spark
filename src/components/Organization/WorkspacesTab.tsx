@@ -32,10 +32,8 @@ const WorkspacesTab: React.FC = () => {
 
   // Get current user's name
   const getCurrentUserName = () => {
-    if (user?.first_name && user?.last_name) {
-      return `${user.first_name} ${user.last_name}`;
-    } else if (user?.first_name) {
-      return user.first_name;
+    if (user?.full_name) {
+      return user.full_name;
     } else if (user?.email) {
       return user.email.split('@')[0];
     }

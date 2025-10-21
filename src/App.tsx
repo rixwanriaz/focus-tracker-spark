@@ -23,6 +23,7 @@ import Goals from "./pages/Goals";
 import Integrations from "./pages/Integrations";
 import Subscription from "./pages/Subscription";
 import Organization from "./pages/Organization";
+import Members from "./pages/Members";
 import Settings from "./pages/Settings";
 import AdminConsole from "./pages/AdminConsole";
 import UserProfile from "./pages/UserProfile";
@@ -179,6 +180,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Organization />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/members" 
+              element={
+                <ProtectedRoute>
+                  <Members />
                 </ProtectedRoute>
               } 
             />

@@ -109,21 +109,23 @@ const Sidebar: React.FC<SidebarProps> = ({
     manage: [
       { icon: FolderOpen, label: 'Projects', path: '/projects' },
       // { icon: Users, label: 'Clients', path: '/clients' },
-      { icon: UsersRound, label: 'Members', path: '/organization?tab=members' },
+      { icon: UsersRound, label: 'Members', path: '/members' },
       { icon: DollarSign, label: 'Billable rates', path: '/billable-rates' },
       { icon: FileText, label: 'Invoices', path: '/invoices' },
       { icon: DollarSign, label: 'Payouts', path: '/payouts' },
       // { icon: Tag, label: 'Tags', path: '/tags' },
       { icon: AlertCircle, label: 'Finance Alerts', path: '/alerts' },
+      { icon: Settings, label: 'Settings', path: '/settings' },
+
       // { icon: Target, label: 'Goals', beta: true, path: '/goals' },
       // { icon: Link, label: 'Integrations', path: '/integrations' }
     ],
-    admin: [
+    // admin: [
       // { icon: CreditCard, label: 'Subscription', path: '/subscription' },
-      { icon: Building, label: 'Organization', path: '/organization' },
-      { icon: Settings, label: 'Settings', path: '/settings' },
-      { icon: Terminal, label: 'Admin Console', path: '/admin-console' }
-    ]
+      // { icon: Building, label: 'Organization', path: '/organization' },
+      // { icon: Settings, label: 'Settings', path: '/settings' },
+      // { icon: Terminal, label: 'Admin Console', path: '/admin-console' }
+    // ]
   };
 
   // Determine active item based on current route
@@ -131,8 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const allItems = [
       ...sidebarItems.track,
       ...sidebarItems.analyze,
-      ...sidebarItems.manage,
-      ...sidebarItems.admin
+      ...sidebarItems.manage
     ];
     const currentItem = allItems.find(item => item.path === location.pathname);
     return currentItem?.label || activeItem;
@@ -221,17 +222,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Show More */}
-        {!isCollapsed && expandedSections.manage && (
+        {/* {!isCollapsed && expandedSections.manage && (
           <div className="px-5 py-2">
             <button className="text-gray-500 text-sm hover:text-gray-300 flex items-center transition-colors group">
               <ChevronDown className="w-3 h-3 mr-2 group-hover:text-gray-300" />
               Show more
             </button>
-          </div>
-        )}
+          </div> */}
+        {/* )} */}
 
-        {/* Admin Section */}
-        <div className="p-2">
+        {/* Admin Section - Commented out */}
+        {/* <div className="p-2">
           {!isCollapsed && (
             <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</div>
           )}
@@ -243,7 +244,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => handleNavigate(item.path)}
             />
           ))}
-        </div>
+        </div> */}
       </div>
 
       {/* Sidebar Toggle & Profile */}

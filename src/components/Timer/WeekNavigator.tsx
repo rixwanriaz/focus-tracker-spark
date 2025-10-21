@@ -1,8 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { format, startOfWeek } from 'date-fns';
 
 interface WeekNavigatorProps {
   currentDate: Date;
@@ -20,7 +19,6 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
   weekTotal,
 }) => {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const weekNumber = format(currentDate, 'I');
 
   const formatDuration = (seconds: number): string => {
@@ -33,9 +31,9 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
   return (
     <div className="bg-gray-950 border-b border-gray-800">
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           {/* Week Navigation */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="ghost"
               size="icon"

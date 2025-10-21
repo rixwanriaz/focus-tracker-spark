@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { format, isSameDay, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { WeekDay, TimeEntry } from './types';
@@ -15,14 +15,24 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onEntryClick,
   onTimeSlotClick,
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   
-  // Start from current hour - showing time from when user is active
-  const startHour = currentHour;
+  // Show all 24 hours
+  const startHour = 0;
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const workingHours = hours.slice(startHour, 24); // From current hour to 11 PM
+  const workingHours = hours; // Show all 24 hours
+  
+  // Auto-scroll to current hour on mount
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      // Scroll to current hour (70px per hour, offset by 2 hours for better visibility)
+      const scrollPosition = Math.max(0, (currentHour - 2) * 70);
+      scrollContainerRef.current.scrollTop = scrollPosition;
+    }
+  }, [currentHour]);
 
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -35,26 +45,26 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     const entryHour = entry.startTime.getHours();
     const entryMinute = entry.startTime.getMinutes();
     
-    // Calculate position relative to our dynamic start hour
-    const top = ((entryHour - startHour) * 60 + entryMinute) * (60 / 60); // 60px per hour
+    // Calculate position from midnight (hour 0)
+    const top = (entryHour * 70) + (entryMinute * (70 / 60)); // 70px per hour
     
     const durationMinutes = entry.duration / 60;
-    const height = Math.max(durationMinutes * (60 / 60), 24); // Minimum 24px height
+    const height = Math.max(durationMinutes * (70 / 60), 24); // Minimum 24px height
     
     return { top, height };
   };
 
   const getEntryColor = (entry: TimeEntry) => {
-    // Generate consistent colors based on project/task
+    // Generate consistent colors based on project/task - brighter and more visible
     const colors = [
-      'bg-blue-500/90 border-blue-400',
-      'bg-emerald-500/90 border-emerald-400',
-      'bg-purple-500/90 border-purple-400',
-      'bg-orange-500/90 border-orange-400',
-      'bg-pink-500/90 border-pink-400',
-      'bg-indigo-500/90 border-indigo-400',
-      'bg-teal-500/90 border-teal-400',
-      'bg-rose-500/90 border-rose-400',
+      'bg-blue-600 border-blue-400',
+      'bg-emerald-600 border-emerald-400',
+      'bg-purple-600 border-purple-400',
+      'bg-orange-600 border-orange-400',
+      'bg-pink-600 border-pink-400',
+      'bg-indigo-600 border-indigo-400',
+      'bg-teal-600 border-teal-400',
+      'bg-rose-600 border-rose-400',
     ];
     
     // Simple hash function for consistent color assignment
@@ -67,39 +77,39 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="flex-1 overflow-hidden bg-gray-900">
       <div className="h-full flex flex-col">
         {/* Week Days Header */}
-        <div className="grid grid-cols-8 border-b border-slate-700/50 bg-gradient-to-b from-slate-800/60 to-slate-800/40 backdrop-blur-md sticky top-0 z-10 shadow-xl shadow-black/20">
-          <div className="p-5 border-r border-slate-700/50 flex items-center justify-center bg-slate-800/30">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30 flex items-center justify-center backdrop-blur-sm">
-              <Clock className="h-5 w-5 text-purple-400" />
+        <div className="grid grid-cols-8 border-b-2 border-gray-700 bg-gray-800 sticky top-0 z-10 shadow-lg">
+          <div className="p-5 border-r-2 border-gray-700 flex items-center justify-center bg-gray-800">
+            <div className="w-11 h-11 rounded-xl bg-purple-600/30 border-2 border-purple-500/50 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-purple-300" />
             </div>
           </div>
           {weekDays.map((day) => (
             <div
               key={day.date.toISOString()}
               className={cn(
-                "p-5 text-center border-r border-slate-700/50 transition-all duration-300 hover:bg-slate-800/40",
-                isToday(day.date) && "bg-gradient-to-b from-purple-600/25 via-purple-700/15 to-transparent border-b-2 border-b-purple-500/40"
+                "p-5 text-center border-r-2 border-gray-700 transition-all duration-200 hover:bg-gray-700/50",
+                isToday(day.date) && "bg-purple-900/30"
               )}
             >
               <div className="flex flex-col items-center gap-2.5">
-                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-[0.15em] mb-0.5">
+                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-[0.15em] mb-0.5">
                   {day.dayName}
                 </span>
                 <span
                   className={cn(
-                    "text-2xl font-extrabold flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300",
+                    "text-2xl font-extrabold flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200",
                     isToday(day.date) 
-                      ? "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white shadow-xl shadow-purple-500/40 ring-2 ring-purple-400/30 ring-offset-2 ring-offset-slate-900 scale-110" 
-                      : "text-slate-300 hover:bg-gradient-to-br hover:from-slate-700 hover:to-slate-800 hover:scale-105 hover:shadow-lg"
+                      ? "bg-purple-600 text-white shadow-lg shadow-purple-500/50" 
+                      : "text-gray-200 hover:bg-gray-700"
                   )}
                 >
                   {day.dayNumber}
                 </span>
                 {day.totalDuration > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg shadow-sm backdrop-blur-sm">
+                  <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-300 bg-emerald-900/50 border border-emerald-600/40 px-2.5 py-1.5 rounded-lg">
                     <Clock className="h-3 w-3" />
                     <span className="font-semibold">{formatDuration(day.totalDuration)}</span>
                   </div>
@@ -110,28 +120,28 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
 
         {/* Calendar Grid */}
-        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-900/60 to-slate-950/80">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-gray-850 scroll-smooth">
           <div className="relative">
             {/* Time Labels */}
             <div className="grid grid-cols-8">
-              <div className="border-r border-slate-700/50 bg-gradient-to-r from-slate-900/70 to-slate-900/50 backdrop-blur-sm sticky left-0 z-10">
+              <div className="border-r-2 border-gray-700 bg-gray-800 sticky left-0 z-10">
                 {workingHours.map((hour) => {
-                  const isCurrentHour = hour === currentHour;
-                  const isPastHour = hour < currentHour;
+                  const isCurrentHour = hour === currentHour && isToday(now);
+                  const isPastHour = hour < currentHour && isToday(now);
                   return (
                     <div
                       key={hour}
                       className={cn(
-                        "h-[70px] border-b border-slate-700/40 px-4 py-3 text-xs font-bold font-mono flex items-center justify-center relative group",
-                        isCurrentHour && "bg-gradient-to-r from-purple-600/30 via-purple-500/20 to-transparent text-purple-300 shadow-lg shadow-purple-500/10",
-                        isPastHour && "text-slate-600 opacity-60",
-                        !isCurrentHour && !isPastHour && "text-slate-400 hover:text-slate-300 hover:bg-slate-800/40"
+                        "h-[70px] border-b border-gray-700 px-4 py-3 text-xs font-bold font-mono flex items-center justify-center relative group",
+                        isCurrentHour && "bg-purple-900/40 text-purple-200",
+                        isPastHour && "text-gray-500",
+                        !isCurrentHour && !isPastHour && "text-gray-300 hover:text-white hover:bg-gray-700/50"
                       )}
                     >
                       <div className={cn(
                         "px-3 py-1.5 rounded-lg transition-all duration-200",
-                        isCurrentHour && "bg-purple-600/20 border border-purple-500/40 shadow-sm",
-                        !isCurrentHour && !isPastHour && "group-hover:bg-slate-800/60"
+                        isCurrentHour && "bg-purple-600/30 border border-purple-500/60",
+                        !isCurrentHour && !isPastHour && "group-hover:bg-gray-700"
                       )}>
                         {format(new Date().setHours(hour, 0, 0, 0), 'h:mm a')}
                       </div>
@@ -151,37 +161,36 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 <div
                   key={day.date.toISOString()}
                   className={cn(
-                    "relative border-r border-slate-700/50 transition-all duration-200",
-                    isToday(day.date) && "bg-gradient-to-b from-purple-500/8 via-purple-600/5 to-transparent"
+                    "relative border-r-2 border-gray-700 transition-all duration-200",
+                    isToday(day.date) && "bg-purple-950/20"
                   )}
                 >
                   {workingHours.map((hour) => {
-                    const isCurrentHour = hour === currentHour;
-                    const isPastHour = hour < currentHour;
-                    const isTodayDate = day.date.getDate() === now.getDate() && 
-                                   day.date.getMonth() === now.getMonth() && 
-                                   day.date.getFullYear() === now.getFullYear();
+                    const isTodayDate = isToday(day.date);
+                    const isCurrentHour = hour === currentHour && isTodayDate;
+                    const isPastHour = hour < currentHour && isTodayDate;
+                    const isClickable = !isPastHour || !isTodayDate; // Allow clicks on past hours for non-today dates
                     
                     return (
                       <div
                         key={hour}
                         className={cn(
-                          "h-[70px] border-b border-slate-700/30 transition-all duration-300 group relative",
-                          isPastHour && isTodayDate && "bg-slate-900/60 cursor-not-allowed opacity-40 hover:opacity-40",
-                          !isPastHour && "hover:bg-gradient-to-br hover:from-slate-700/30 hover:to-slate-600/20 cursor-pointer",
-                          isCurrentHour && isTodayDate && "bg-gradient-to-r from-purple-500/15 via-purple-600/10 to-purple-700/5"
+                          "h-[70px] border-b border-gray-700 transition-all duration-200 group relative",
+                          isPastHour && "bg-gray-900/80 cursor-not-allowed opacity-50",
+                          isClickable && "hover:bg-gray-700/40 cursor-pointer",
+                          isCurrentHour && "bg-purple-900/30 border-y-2 border-purple-600/40"
                         )}
-                        onClick={() => !isPastHour && onTimeSlotClick?.(day.date, hour)}
+                        onClick={() => isClickable && onTimeSlotClick?.(day.date, hour)}
                       >
                         {/* Enhanced hover indicator */}
-                        {!isPastHour && (
+                        {isClickable && (
                           <>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute inset-0 bg-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-500/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                           </>
                         )}
-                        {isPastHour && isTodayDate && (
-                          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_48%,rgba(71,85,105,0.1)_48%,rgba(71,85,105,0.1)_52%,transparent_52%)] bg-[length:8px_8px]" />
+                        {isPastHour && (
+                          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_48%,rgba(55,65,81,0.2)_48%,rgba(55,65,81,0.2)_52%,transparent_52%)] bg-[length:8px_8px]" />
                         )}
                       </div>
                     );
@@ -195,10 +204,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       <div
                         key={entry.id}
                         className={cn(
-                          "absolute left-2 right-2 rounded-xl px-3.5 py-2.5 cursor-pointer",
-                          "text-white text-xs shadow-xl backdrop-blur-md",
-                          "hover:shadow-2xl hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300",
-                          "border-l-4 overflow-hidden group ring-1 ring-white/10",
+                          "absolute left-2 right-2 rounded-lg px-3 py-2 cursor-pointer",
+                          "text-white text-xs shadow-lg",
+                          "hover:shadow-xl hover:scale-[1.02] transition-all duration-200",
+                          "border-l-4 border-2 overflow-hidden group",
                           colorClass
                         )}
                         style={{
@@ -208,20 +217,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         onClick={() => onEntryClick?.(entry)}
                       >
                         <div className="relative z-10">
-                          <div className="font-bold truncate mb-1 text-shadow-sm group-hover:tracking-wide transition-all duration-300">
+                          <div className="font-bold truncate mb-1">
                             {entry.description || 'No description'}
                           </div>
                           {height > 40 && (
-                            <div className="text-[10px] opacity-90 font-mono flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-md w-fit">
+                            <div className="text-[10px] font-mono flex items-center gap-1 bg-black/30 px-1.5 py-0.5 rounded w-fit">
                               <Clock className="h-3 w-3" />
                               <span className="font-semibold">{format(entry.startTime, 'h:mm a')}</span>
                             </div>
                           )}
                         </div>
-                        {/* Enhanced shine effect on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-                        {/* Glow effect */}
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-white/5 to-transparent transition-opacity duration-300" />
+                        {/* Subtle shine effect on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                       </div>
                     );
                   })}

@@ -7,7 +7,7 @@ import { CalendarView } from './CalendarView';
 import { ManualTimeEntryDialog } from './ManualTimeEntryDialog';
 import { TimerState, WeekDay, TimeEntry } from './types';
 import { Button } from '@/components/ui/button';
-import { Calendar, Settings } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppDispatch, RootState } from '@/redux/store';
 import { 
@@ -308,28 +308,7 @@ export const TimerModule: React.FC = () => {
         weekTotal={weekTotal}
       />
 
-      {/* View Mode Selector */}
-      <div className="border-b border-gray-800 bg-gray-950">
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <Button
-                variant="default"
-                size="sm"
-                className="gap-2 bg-purple-600 text-white hover:bg-purple-700"
-              >
-                <Calendar className="h-4 w-4" />
-                Calendar
-              </Button>
-              {/* List view and Timesheet hidden */}
-            </div>
-
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden bg-gray-950">
