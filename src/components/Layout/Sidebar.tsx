@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '@/redux/store';
-import { getOrgIdFromToken } from '@/lib/jwt';
-import { getOrganization } from '@/redux/slice/organizationSlice';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/redux/store";
+import { getOrgIdFromToken } from "@/lib/jwt";
+import { getOrganization } from "@/redux/slice/organizationSlice";
+import {
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   Clock,
   BarChart3,
@@ -23,10 +23,10 @@ import {
   CreditCard,
   Building,
   Terminal,
-  DollarSign
-} from 'lucide-react';
-import SidebarItem from './SidebarItem';
-import SectionHeader from './SectionHeader';
+  DollarSign,
+} from "lucide-react";
+import SidebarItem from "./SidebarItem";
+import SectionHeader from "./SectionHeader";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -35,22 +35,22 @@ interface SidebarProps {
   onNavigate?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  isCollapsed, 
-  setIsCollapsed, 
-  activeItem = 'Timer',
-  onNavigate
+const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed,
+  setIsCollapsed,
+  activeItem = "Timer",
+  onNavigate,
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     analyze: true,
     manage: true,
-    admin: true
+    admin: true,
   });
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
@@ -60,7 +60,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Get user and organization data from Redux
   const { user } = useSelector((state: RootState) => state.auth);
-  const { currentOrganization } = useSelector((state: RootState) => state.organization);
+  const { currentOrganization } = useSelector(
+    (state: RootState) => state.organization
+  );
 
   // Fetch organization details on mount using org ID from token
   useEffect(() => {
@@ -72,59 +74,57 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Helper function to get user initials
   const getUserInitials = () => {
-    if (!user) return 'U';
+    if (!user) return "U";
     if (user.full_name) {
       return user.full_name
-        .split(' ')
-        .map(word => word.charAt(0))
-        .join('')
+        .split(" ")
+        .map((word) => word.charAt(0))
+        .join("")
         .toUpperCase()
         .slice(0, 2);
     }
-    return user.email?.charAt(0)?.toUpperCase() || 'U';
+    return user.email?.charAt(0)?.toUpperCase() || "U";
   };
 
   // Helper function to get user display name
   const getUserDisplayName = () => {
-    if (!user) return 'User';
-    return user.full_name || user.email || 'User';
+    if (!user) return "User";
+    return user.full_name || user.email || "User";
   };
 
   // Helper function to get organization display name (truncated)
   const getOrganizationDisplayName = () => {
-    if (!currentOrganization?.name) return 'Workspace';
+    if (!currentOrganization?.name) return "Workspace";
     const orgName = currentOrganization.name.toUpperCase();
     // Truncate if too long
-    return orgName.length > 20 ? orgName.substring(0, 17) + '...' : orgName;
+    return orgName.length > 20 ? orgName.substring(0, 17) + "..." : orgName;
   };
 
   const sidebarItems = {
-    track: [
-      { icon: Clock, label: 'Timer', path: '/timer' }
-    ],
+    track: [{ icon: Clock, label: "Timer", path: "/timer" }],
     analyze: [
-      { icon: BarChart3, label: 'Reports', path: '/reports' },
+      { icon: BarChart3, label: "Reports", path: "/reports" },
       // { icon: CheckSquare, label: 'Approvals', path: '/approvals' }
     ],
     manage: [
-      { icon: FolderOpen, label: 'Projects', path: '/projects' },
+      { icon: FolderOpen, label: "Projects", path: "/projects" },
       // { icon: Users, label: 'Clients', path: '/clients' },
-      { icon: UsersRound, label: 'Members', path: '/members' },
-      { icon: DollarSign, label: 'Billable rates', path: '/billable-rates' },
-      { icon: FileText, label: 'Invoices', path: '/invoices' },
-      { icon: DollarSign, label: 'Payouts', path: '/payouts' },
+      { icon: UsersRound, label: "Members", path: "/members" },
+      { icon: DollarSign, label: "Billable rates", path: "/billable-rates" },
+      { icon: FileText, label: "Invoices", path: "/invoices" },
+      { icon: DollarSign, label: "Financials", path: "/payouts" },
       // { icon: Tag, label: 'Tags', path: '/tags' },
-      { icon: AlertCircle, label: 'Finance Alerts', path: '/alerts' },
-      { icon: Settings, label: 'Settings', path: '/settings' },
+      { icon: AlertCircle, label: "Finance Alerts", path: "/alerts" },
+      // { icon: Settings, label: "Settings", path: "/settings" },
 
       // { icon: Target, label: 'Goals', beta: true, path: '/goals' },
       // { icon: Link, label: 'Integrations', path: '/integrations' }
     ],
     // admin: [
-      // { icon: CreditCard, label: 'Subscription', path: '/subscription' },
-      // { icon: Building, label: 'Organization', path: '/organization' },
-      // { icon: Settings, label: 'Settings', path: '/settings' },
-      // { icon: Terminal, label: 'Admin Console', path: '/admin-console' }
+    // { icon: CreditCard, label: 'Subscription', path: '/subscription' },
+    // { icon: Building, label: 'Organization', path: '/organization' },
+    // { icon: Settings, label: 'Settings', path: '/settings' },
+    // { icon: Terminal, label: 'Admin Console', path: '/admin-console' }
     // ]
   };
 
@@ -133,9 +133,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     const allItems = [
       ...sidebarItems.track,
       ...sidebarItems.analyze,
-      ...sidebarItems.manage
+      ...sidebarItems.manage,
     ];
-    const currentItem = allItems.find(item => item.path === location.pathname);
+    const currentItem = allItems.find(
+      (item) => item.path === location.pathname
+    );
     return currentItem?.label || activeItem;
   };
 
@@ -147,7 +149,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col h-full`}>
+    <div
+      className={`${
+        isCollapsed ? "w-16" : "w-64"
+      } bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col h-full`}
+    >
       {/* Logo/Header */}
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between">
@@ -157,8 +163,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-white">Workspace</div>
-                <div className="text-xs text-gray-400 truncate">{getOrganizationDisplayName()}</div>
+                <div className="text-sm font-semibold text-white">
+                  Workspace
+                </div>
+                <div className="text-xs text-gray-400 truncate">
+                  {getOrganizationDisplayName()}
+                </div>
               </div>
             )}
           </div>
@@ -173,13 +183,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Track Section */}
         <div className="p-2">
           {!isCollapsed && (
-            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Track</div>
+            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Track
+            </div>
           )}
           {sidebarItems.track.map((item, idx) => (
-            <SidebarItem 
-              key={idx} 
-              item={item} 
-              isActive={item.label === currentActiveItem} 
+            <SidebarItem
+              key={idx}
+              item={item}
+              isActive={item.label === currentActiveItem}
               onClick={() => handleNavigate(item.path)}
             />
           ))}
@@ -187,38 +199,40 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Analyze Section */}
         <div className="p-2">
-          <SectionHeader 
-            title="Analyze" 
-            expanded={expandedSections.analyze} 
-            onToggle={() => toggleSection('analyze')}
+          <SectionHeader
+            title="Analyze"
+            expanded={expandedSections.analyze}
+            onToggle={() => toggleSection("analyze")}
             isCollapsed={isCollapsed}
           />
-          {expandedSections.analyze && sidebarItems.analyze.map((item, idx) => (
-            <SidebarItem 
-              key={idx} 
-              item={item} 
-              isActive={item.label === currentActiveItem} 
-              onClick={() => handleNavigate(item.path)}
-            />
-          ))}
+          {expandedSections.analyze &&
+            sidebarItems.analyze.map((item, idx) => (
+              <SidebarItem
+                key={idx}
+                item={item}
+                isActive={item.label === currentActiveItem}
+                onClick={() => handleNavigate(item.path)}
+              />
+            ))}
         </div>
 
         {/* Manage Section */}
         <div className="p-2">
-          <SectionHeader 
-            title="Manage" 
-            expanded={expandedSections.manage} 
-            onToggle={() => toggleSection('manage')}
+          <SectionHeader
+            title="Manage"
+            expanded={expandedSections.manage}
+            onToggle={() => toggleSection("manage")}
             isCollapsed={isCollapsed}
           />
-          {expandedSections.manage && sidebarItems.manage.map((item, idx) => (
-            <SidebarItem 
-              key={idx} 
-              item={item} 
-              isActive={item.label === currentActiveItem} 
-              onClick={() => handleNavigate(item.path)}
-            />
-          ))}
+          {expandedSections.manage &&
+            sidebarItems.manage.map((item, idx) => (
+              <SidebarItem
+                key={idx}
+                item={item}
+                isActive={item.label === currentActiveItem}
+                onClick={() => handleNavigate(item.path)}
+              />
+            ))}
         </div>
 
         {/* Show More */}
@@ -250,8 +264,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Toggle & Profile */}
       <div className="border-t border-gray-800 p-4">
         <div className="flex items-center justify-between">
-          <button 
-            onClick={() => handleNavigate('/profile')}
+          <button
+            onClick={() => handleNavigate("/profile")}
             className="flex items-center hover:bg-gray-800 rounded-lg p-1 transition-colors group flex-1"
           >
             <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
@@ -270,12 +284,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
           {/* Only show collapse button when not on mobile (when onNavigate is not provided) */}
           {!onNavigate && (
-            <button 
-              onClick={() => setIsCollapsed(!isCollapsed)} 
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
               className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-gray-800 rounded-lg ml-2"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+              {isCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" />
+              )}
             </button>
           )}
         </div>

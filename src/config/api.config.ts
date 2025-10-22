@@ -10,7 +10,7 @@ export const API_CONFIG = {
   BASE_URL:
     import.meta.env.VITE_API_BASE_URL ||
     "https://joeltimetracking-cahjhyguh4fcd0hn.canadacentral-01.azurewebsites.net/api/v1",
-    // "https:localhost:8000/api/v1",
+  // "https:localhost:8000/api/v1",
 
   // API Endpoints
   ENDPOINTS: {
