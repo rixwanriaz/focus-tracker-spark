@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { ArrowLeft, Users, Calendar, DollarSign, BarChart3, Settings, RefreshCw } from "lucide-react";
+import { ArrowLeft, Users, Calendar, DollarSign, BarChart3, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -194,41 +194,52 @@ const ProjectDetail: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-gray-950">
         {/* Header */}
-        <div className="bg-gray-800 border-b border-gray-700">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+        <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-800/50 shadow-xl">
+          <div className="px-6 py-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-start gap-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/projects")}
-                  className="text-gray-400 hover:text-white hover:bg-gray-700"
+                  className="text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all hover:scale-105"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Projects
+                  Back
                 </Button>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">{currentProject.name}</h1>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                      {currentProject.name}
+                    </h1>
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "text-xs font-semibold px-3 py-1",
+                        currentProject.is_active || currentProject.status?.toLowerCase() === 'active'
+                          ? "bg-green-900/30 border-green-800 text-green-400"
+                          : "bg-gray-800 border-gray-600 text-gray-300"
+                      )}
+                    >
+                      {currentProject.status || "Active"}
+                    </Badge>
+                  </div>
                   {currentProject.description && (
-                    <p className="text-gray-400 mt-1">{currentProject.description}</p>
+                    <p className="text-gray-400 text-sm leading-relaxed max-w-2xl">
+                      {currentProject.description}
+                    </p>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                  {currentProject.status || "Active"}
-                </Badge>
-                <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Button>
+              <div className="flex items-center gap-3">
                 <Button
                   size="sm"
                   onClick={() => navigate(`/invoices?project_id=${currentProject.id}`)}
-                  className="bg-pink-600 hover:bg-pink-700 text-white"
+                  className="bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 text-white shadow-lg hover:scale-105 transition-transform"
                 >
+                  <DollarSign className="mr-2 h-4 w-4" />
                   Create Invoice
                 </Button>
               </div>
@@ -237,61 +248,69 @@ const ProjectDetail: React.FC = () => {
         </div>
 
         {/* Project Stats */}
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Team Members</p>
-                    <p className="text-lg font-semibold text-white">{projectMembers.length}</p>
+        <div className="px-6 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <Card className="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border-blue-800/50 hover:border-blue-700 transition-all hover:shadow-xl hover:scale-105 group">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-blue-300 group-hover:text-blue-200 transition-colors">Team Members</p>
+                    <p className="text-3xl font-bold text-white">{projectMembers.length}</p>
+                  </div>
+                  <div className="p-3 bg-blue-900/40 rounded-xl border border-blue-800/50 group-hover:bg-blue-900/60 transition-colors">
+                    <Users className="h-6 w-6 text-blue-400" />
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-green-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Tasks</p>
-                    <p className="text-lg font-semibold text-white">{filteredTasks.length}</p>
+            <Card className="bg-gradient-to-br from-green-900/30 to-green-800/10 border-green-800/50 hover:border-green-700 transition-all hover:shadow-xl hover:scale-105 group">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-green-300 group-hover:text-green-200 transition-colors">Tasks</p>
+                    <p className="text-3xl font-bold text-white">{filteredTasks.length}</p>
+                  </div>
+                  <div className="p-3 bg-green-900/40 rounded-xl border border-green-800/50 group-hover:bg-green-900/60 transition-colors">
+                    <BarChart3 className="h-6 w-6 text-green-400" />
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-purple-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Due Date</p>
-                    <p className="text-lg font-semibold text-white">
+            <Card className="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border-purple-800/50 hover:border-purple-700 transition-all hover:shadow-xl hover:scale-105 group">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-purple-300 group-hover:text-purple-200 transition-colors">Due Date</p>
+                    <p className="text-xl font-bold text-white">
                       {currentProject.end_date 
-                        ? new Date(currentProject.end_date).toLocaleDateString()
-                        : "No due date"
+                        ? new Date(currentProject.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        : "No date"
                       }
                     </p>
                   </div>
+                  <div className="p-3 bg-purple-900/40 rounded-xl border border-purple-800/50 group-hover:bg-purple-900/60 transition-colors">
+                    <Calendar className="h-6 w-6 text-purple-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-orange-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Budget</p>
-                    <p className="text-lg font-semibold text-white">
+            <Card className="bg-gradient-to-br from-orange-900/30 to-orange-800/10 border-orange-800/50 hover:border-orange-700 transition-all hover:shadow-xl hover:scale-105 group">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-orange-300 group-hover:text-orange-200 transition-colors">Budget</p>
+                    <p className="text-xl font-bold text-white">
                       {currentProject.budget_amount 
                         ? `${currentProject.budget_currency} ${currentProject.budget_amount.toLocaleString()}`
                         : "No budget"
                       }
                     </p>
+                  </div>
+                  <div className="p-3 bg-orange-900/40 rounded-xl border border-orange-800/50 group-hover:bg-orange-900/60 transition-colors">
+                    <DollarSign className="h-6 w-6 text-orange-400" />
                   </div>
                 </div>
               </CardContent>
@@ -302,20 +321,49 @@ const ProjectDetail: React.FC = () => {
         {/* Main Content */}
         <div className="px-6 pb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6 bg-gray-800 border-gray-700">
-              <TabsTrigger value="tasks" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Tasks</TabsTrigger>
-              <TabsTrigger value="overview" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Overview</TabsTrigger>
-              <TabsTrigger value="members" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Members</TabsTrigger>
-              <TabsTrigger value="timeline" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Timeline</TabsTrigger>
-              <TabsTrigger value="costs" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Costs</TabsTrigger>
-              <TabsTrigger value="expenses" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-400">Expenses</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-6 bg-gray-900 border border-gray-800 rounded-xl p-1 shadow-lg">
+              <TabsTrigger 
+                value="tasks" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
+              >
+                Tasks
+              </TabsTrigger>
+              <TabsTrigger 
+                value="overview" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="members" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
+              >
+Team Members              </TabsTrigger>
+              <TabsTrigger 
+                value="timeline" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
+              >
+                Timeline
+              </TabsTrigger>
+              <TabsTrigger 
+                value="costs" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
+              >
+                Costs
+              </TabsTrigger>
+              <TabsTrigger 
+                value="expenses" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
+              >
+                Expenses
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="tasks" className="mt-6">
               <div className="space-y-6">
                 {/* Task Filters */}
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
+                <Card className="bg-gray-900 border-gray-800 shadow-lg rounded-xl">
+                  <CardContent className="p-5">
                     <TaskFiltersComponent
                       filters={taskFilters}
                       onFiltersChange={handleFiltersChange}
@@ -326,28 +374,28 @@ const ProjectDetail: React.FC = () => {
                 </Card>
 
                 {/* Task Creation */}
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-lg">
                   <div>
-                    <h2 className="text-lg font-semibold text-white">Tasks</h2>
+                    <h2 className="text-xl font-bold text-white">Tasks</h2>
                     {tasksLoading && (
-                      <p className="text-sm text-gray-400">Loading tasks...</p>
+                      <p className="text-sm text-gray-400 mt-1">Loading tasks...</p>
                     )}
                     {taskError && (
-                      <p className="text-sm text-red-400">Error loading tasks: {taskError}</p>
+                      <p className="text-sm text-red-400 mt-1">Error loading tasks: {taskError}</p>
                     )}
                     {!tasksLoading && !taskError && (
-                      <p className="text-sm text-gray-400">
-                        Total: {filteredTasks.length} tasks
+                      <p className="text-sm text-gray-400 mt-1">
+                        Total: <span className="font-semibold text-purple-400">{filteredTasks.length}</span> tasks
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleRefreshTasks}
                       disabled={tasksLoading}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                      className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white hover:scale-105 transition-all"
                     >
                       <RefreshCw className={`mr-2 h-4 w-4 ${tasksLoading ? 'animate-spin' : ''}`} />
                       Refresh
@@ -368,7 +416,7 @@ const ProjectDetail: React.FC = () => {
                 </div>
 
                 {/* Task Display */}
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl overflow-hidden">
                   <CardContent className="p-0">
                     <TaskTable
                       tasks={filteredTasks}
@@ -383,38 +431,44 @@ const ProjectDetail: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="overview" className="mt-6">
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Project Overview</CardTitle>
+              <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl">
+                <CardHeader className="border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800">
+                  <CardTitle className="text-xl font-bold text-white">Project Overview</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-6">
                   {projectOverview ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-400">Total Tasks</p>
-                          <p className="text-2xl font-semibold text-white">{projectOverview.total_tasks}</p>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-5 bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-800/30 rounded-xl">
+                          <p className="text-sm font-medium text-blue-300 mb-2">Total Tasks</p>
+                          <p className="text-4xl font-bold text-white">{projectOverview.total_tasks}</p>
                         </div>
-                        <div>
-                          <p className="text-sm text-gray-400">Completed Tasks</p>
-                          <p className="text-2xl font-semibold text-white">{projectOverview.completed_tasks}</p>
+                        <div className="p-5 bg-gradient-to-br from-green-900/20 to-green-800/10 border border-green-800/30 rounded-xl">
+                          <p className="text-sm font-medium text-green-300 mb-2">Completed Tasks</p>
+                          <p className="text-4xl font-bold text-white">{projectOverview.completed_tasks}</p>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-400 mb-2">Progress</p>
-                        <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div className="p-5 bg-gradient-to-br from-purple-900/20 to-purple-800/10 border border-purple-800/30 rounded-xl">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-sm font-medium text-purple-300">Progress</p>
+                          <p className="text-2xl font-bold text-white">
+                            {projectOverview.timeline_status?.progress_percentage ?? 0}%
+                          </p>
+                        </div>
+                        <div className="w-full bg-gray-800 rounded-full h-3 shadow-inner">
                           <div 
-                            className="bg-purple-600 h-2 rounded-full" 
-                            style={{ inlineSize: `${projectOverview.timeline_status?.progress_percentage ?? 0}%` }}
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-500 shadow-lg" 
+                            style={{ width: `${projectOverview.timeline_status?.progress_percentage ?? 0}%` }}
                           ></div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {projectOverview.timeline_status?.progress_percentage ?? 0}% complete
+                        <p className="text-xs text-gray-400 mt-2">
+                          Complete
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-12 text-gray-400">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mb-4"></div>
                       <p>Loading project overview...</p>
                     </div>
                   )}
@@ -427,13 +481,17 @@ const ProjectDetail: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="timeline" className="mt-6">
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Project Timeline</CardTitle>
+              <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl">
+                <CardHeader className="border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800">
+                  <CardTitle className="text-xl font-bold text-white">Project Timeline</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-gray-400">
-                    <p>Timeline view coming soon...</p>
+                <CardContent className="p-6">
+                  <div className="text-center py-16">
+                    <div className="inline-block p-4 bg-purple-900/20 rounded-full border border-purple-800/30 mb-4">
+                      <Calendar className="h-12 w-12 text-purple-400" />
+                    </div>
+                    <p className="text-gray-400 text-lg">Timeline view coming soon...</p>
+                    <p className="text-gray-500 text-sm mt-2">Track project milestones and deadlines</p>
                   </div>
                 </CardContent>
               </Card>
@@ -454,3 +512,4 @@ const ProjectDetail: React.FC = () => {
 };
 
 export default ProjectDetail;
+

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addWeeks, subWeeks, startOfWeek, addDays, format } from 'date-fns';
 import { TimerInput } from './TimerInput';
-import { WeekNavigator } from './WeekNavigator';
+import { WeekNavigator, ViewMode } from './WeekNavigator';
 import { CalendarView } from './CalendarView';
 import { ManualTimeEntryDialog } from './ManualTimeEntryDialog';
 import { TimerState, WeekDay, TimeEntry } from './types';
@@ -42,6 +42,7 @@ export const TimerModule: React.FC = () => {
   // Week Navigation
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [weekDays, setWeekDays] = useState<WeekDay[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
   
   // Dialog state
   const [manualEntryDialogOpen, setManualEntryDialogOpen] = useState(false);
@@ -66,6 +67,30 @@ export const TimerModule: React.FC = () => {
       end: weekEnd.toISOString(),
     }));
   }, [dispatch]);
+
+  // Reload data when view mode changes
+  useEffect(() => {
+    if (viewMode === 'day') {
+      // Load entries for just the current date
+      const dayStart = new Date(currentDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(currentDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      dispatch(listEntries({
+        start: dayStart.toISOString(),
+        end: dayEnd.toISOString(),
+      }));
+    } else {
+      // Load entries for the entire week
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const weekEnd = addDays(weekStart, 6);
+      dispatch(listEntries({
+        start: weekStart.toISOString(),
+        end: weekEnd.toISOString(),
+      }));
+    }
+  }, [viewMode, dispatch]);
 
   // Load tasks when project is selected
   useEffect(() => {
@@ -104,32 +129,50 @@ export const TimerModule: React.FC = () => {
     color: '#8b5cf6',
   });
 
-  // Initialize week days
+  // Initialize days based on view mode
   useEffect(() => {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const days: WeekDay[] = Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(weekStart, i);
-      
-      // Ensure entries is an array before mapping
-      const entriesArray = Array.isArray(entries) ? entries : [];
-      
+    const entriesArray = Array.isArray(entries) ? entries : [];
+    
+    if (viewMode === 'day') {
+      // For day view, only show the selected date
       const dayEntries = entriesArray
         .map(convertToLocalEntry)
         .filter((entry) =>
-          format(entry.startTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+          format(entry.startTime, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd')
         );
       const totalDuration = dayEntries.reduce((sum, entry) => sum + entry.duration, 0);
 
-      return {
-        date,
-        dayName: format(date, 'EEE').toUpperCase(),
-        dayNumber: parseInt(format(date, 'd')),
+      setWeekDays([{
+        date: currentDate,
+        dayName: format(currentDate, 'EEEE').toUpperCase(),
+        dayNumber: parseInt(format(currentDate, 'd')),
         totalDuration,
         entries: dayEntries,
-      };
-    });
-    setWeekDays(days);
-  }, [currentDate, entries]);
+      }]);
+    } else {
+      // For week view, show the entire week
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const days: WeekDay[] = Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(weekStart, i);
+        
+        const dayEntries = entriesArray
+          .map(convertToLocalEntry)
+          .filter((entry) =>
+            format(entry.startTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+          );
+        const totalDuration = dayEntries.reduce((sum, entry) => sum + entry.duration, 0);
+
+        return {
+          date,
+          dayName: format(date, 'EEE').toUpperCase(),
+          dayNumber: parseInt(format(date, 'd')),
+          totalDuration,
+          entries: dayEntries,
+        };
+      });
+      setWeekDays(days);
+    }
+  }, [currentDate, entries, viewMode]);
 
   // Calculate week total
   const weekTotal = weekDays.reduce((sum, day) => sum + day.totalDuration, 0);
@@ -262,6 +305,32 @@ export const TimerModule: React.FC = () => {
     }));
   };
 
+  // Handle date change (when user selects a specific date from calendar)
+  const handleDateChange = (newDate: Date) => {
+    setCurrentDate(newDate);
+    
+    if (viewMode === 'day') {
+      // For day view, load entries for just that day
+      const dayStart = new Date(newDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(newDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      dispatch(listEntries({
+        start: dayStart.toISOString(),
+        end: dayEnd.toISOString(),
+      }));
+    } else {
+      // For week view, load entries for the entire week containing that date
+      const weekStart = startOfWeek(newDate, { weekStartsOn: 1 });
+      const weekEnd = addDays(weekStart, 6);
+      dispatch(listEntries({
+        start: weekStart.toISOString(),
+        end: weekEnd.toISOString(),
+      }));
+    }
+  };
+
   // Entry handlers
   const handleEntryClick = (entry: TimeEntry) => {
     toast.info(`Entry: ${entry.description}`, {
@@ -305,7 +374,10 @@ export const TimerModule: React.FC = () => {
         onPreviousWeek={handlePreviousWeek}
         onNextWeek={handleNextWeek}
         onToday={handleToday}
+        onDateChange={handleDateChange}
         weekTotal={weekTotal}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       
@@ -317,6 +389,7 @@ export const TimerModule: React.FC = () => {
           weekDays={weekDays}
           onEntryClick={handleEntryClick}
           onTimeSlotClick={handleTimeSlotClick}
+          viewMode={viewMode}
         />
       </div>
     </div>

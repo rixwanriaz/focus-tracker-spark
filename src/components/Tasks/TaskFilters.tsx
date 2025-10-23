@@ -22,10 +22,12 @@ const taskStatusOptions = [
 ];
 
 const taskPriorityOptions = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
   { value: "urgent", label: "Urgent" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+
+  
 ];
 
 export const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({

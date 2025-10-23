@@ -158,8 +158,6 @@ const Projects: React.FC = () => {
 
         {/* Filters */}
         <ProjectFilters
-          showArchived={showArchived}
-          onShowArchivedChange={setShowArchived}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />

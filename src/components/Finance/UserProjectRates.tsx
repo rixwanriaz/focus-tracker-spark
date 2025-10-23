@@ -138,7 +138,7 @@ const UserProjectRates: React.FC = () => {
   };
 
   const getRateStatusBadgeColor = (rateSet: boolean) => {
-    return rateSet ? 'bg-green-600' : 'bg-yellow-600';
+    return rateSet ? 'bg-green-600' : 'bg-orange-600';
   };
 
   if (loading || loadingRates) {
@@ -174,55 +174,45 @@ const UserProjectRates: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white">My Project Rates</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Set your hourly rates for each project you're working on
-          </p>
-        </div>
-      </div>
-
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 hover:border-purple-500/50 transition-all duration-200">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <Card className="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border-purple-800/50 hover:border-purple-700 transition-all hover:shadow-xl hover:scale-105 group">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400">Total Projects</p>
-                <p className="text-3xl font-bold text-white">{projectRates.length}</p>
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-purple-300 group-hover:text-purple-200 transition-colors">Total Projects</p>
+                <p className="text-4xl font-bold text-white">{projectRates.length}</p>
               </div>
-              <div className="p-3 bg-purple-600/20 rounded-full">
-                <Building className="h-6 w-6 text-purple-400" />
+              <div className="p-3 bg-purple-900/40 rounded-xl border border-purple-800/50 group-hover:bg-purple-900/60 transition-colors">
+                <Building className="h-7 w-7 text-purple-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 hover:border-green-500/50 transition-all duration-200">
+        <Card className="bg-gradient-to-br from-green-900/30 to-green-800/10 border-green-800/50 hover:border-green-700 transition-all hover:shadow-xl hover:scale-105 group">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400">Rates Set</p>
-                <p className="text-3xl font-bold text-white">{ratesSet}</p>
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-green-300 group-hover:text-green-200 transition-colors">Rates Set</p>
+                <p className="text-4xl font-bold text-white">{ratesSet}</p>
               </div>
-              <div className="p-3 bg-green-600/20 rounded-full">
-                <CheckCircle className="h-6 w-6 text-green-400" />
+              <div className="p-3 bg-green-900/40 rounded-xl border border-green-800/50 group-hover:bg-green-900/60 transition-colors">
+                <CheckCircle className="h-7 w-7 text-green-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 hover:border-yellow-500/50 transition-all duration-200">
+        <Card className="bg-gradient-to-br from-orange-900/30 to-orange-800/10 border-orange-800/50 hover:border-orange-700 transition-all hover:shadow-xl hover:scale-105 group">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400">Pending Setup</p>
-                <p className="text-3xl font-bold text-white">{ratesPending}</p>
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-orange-300 group-hover:text-orange-200 transition-colors">Pending Setup</p>
+                <p className="text-4xl font-bold text-white">{ratesPending}</p>
               </div>
-              <div className="p-3 bg-yellow-600/20 rounded-full">
-                <AlertCircle className="h-6 w-6 text-yellow-400" />
+              <div className="p-3 bg-orange-900/40 rounded-xl border border-orange-800/50 group-hover:bg-orange-900/60 transition-colors">
+                <AlertCircle className="h-7 w-7 text-orange-400" />
               </div>
             </div>
           </CardContent>
@@ -231,39 +221,47 @@ const UserProjectRates: React.FC = () => {
 
       {/* Rate Setup Alert */}
       {ratesPending > 0 && (
-        <Alert className="bg-yellow-900/20 border-yellow-500/50">
-          <AlertCircle className="h-4 w-4 text-yellow-400" />
-          <AlertDescription className="text-yellow-300">
-            You have {ratesPending} project{ratesPending > 1 ? 's' : ''} without rates set. 
-            Please set your hourly rates to enable time tracking and billing.
-          </AlertDescription>
+        <Alert className="bg-gradient-to-br from-orange-900/20 to-orange-800/10 border-orange-800/50 rounded-xl shadow-lg">
+          <div className="flex gap-3">
+            <div className="p-2 bg-orange-900/30 rounded-lg border border-orange-800/50">
+              <AlertCircle className="h-5 w-5 text-orange-400" />
+            </div>
+            <AlertDescription className="text-orange-200">
+              <p className="font-semibold mb-1">Action Required</p>
+              You have <span className="font-bold text-orange-300">{ratesPending}</span> project{ratesPending > 1 ? 's' : ''} without rates set. 
+              Please set your hourly rates to enable time tracking and billing.
+            </AlertDescription>
+          </div>
         </Alert>
       )}
 
       {/* Projects List */}
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         {projectRates.map((project) => (
-          <Card key={project.id} className="bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 shadow-xl hover:border-purple-500/50 transition-all duration-200">
-            <CardHeader className="bg-gray-950/50 border-b border-gray-800">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center">
-                    <Building className="h-5 w-5 text-white" />
+          <Card key={project.id} className="bg-gray-900 border-gray-800 shadow-2xl hover:shadow-purple-500/10 hover:border-purple-700/50 transition-all duration-300 overflow-hidden rounded-xl group">
+            <CardHeader className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-800/50 p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-md opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                    <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
+                      <Building className="h-6 w-6 text-white" />
+                    </div>
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-semibold text-white">{project.name}</CardTitle>
+                    <CardTitle className="text-xl font-bold text-white group-hover:text-purple-300 transition-colors">{project.name}</CardTitle>
                     {project.description && (
-                      <p className="text-gray-400 text-sm mt-1">{project.description}</p>
+                      <p className="text-gray-400 text-sm mt-1 leading-relaxed">{project.description}</p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={`${getStatusBadgeColor(project.status)} text-white font-medium px-3 py-1 rounded-full`}>
+                <div className="flex items-center gap-3">
+                  <Badge className={`${getStatusBadgeColor(project.status)} text-white font-semibold px-3 py-1.5 rounded-lg shadow-md`}>
                     {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                   </Badge>
-                  <Badge className={`${getRateStatusBadgeColor(project.rateSet)} text-white font-medium px-3 py-1 rounded-full`}>
-                    <div className={`w-2 h-2 rounded-full mr-2 ${
-                      project.rateSet ? 'bg-green-300' : 'bg-yellow-300'
+                  <Badge className={`${getRateStatusBadgeColor(project.rateSet)} text-white font-semibold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-2`}>
+                    <div className={`w-2 h-2 rounded-full ${
+                      project.rateSet ? 'bg-green-300' : 'bg-orange-300'
                     }`}></div>
                     {project.rateSet ? 'Rate Set' : 'Pending'}
                   </Badge>
@@ -271,96 +269,77 @@ const UserProjectRates: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Current Rate Display */}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-300 mb-3">Current Rate</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-900/30 rounded-lg border border-blue-800/30">
+                      <DollarSign className="h-4 w-4 text-blue-400" />
+                    </div>
+                    <h4 className="text-sm font-semibold text-white">Current Rate</h4>
+                  </div>
                   {project.rateSet ? (
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-white">${project.currentRate}/hour</div>
-                      <p className="text-xs text-gray-400">
+                    <div className="p-5 bg-gradient-to-br from-green-900/20 to-green-800/10 border border-green-800/30 rounded-xl">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CheckCircle className="h-5 w-5 text-green-400" />
+                        <span className="text-sm font-medium text-green-300">Active Rate</span>
+                      </div>
+                      <div className="text-4xl font-bold text-white mb-1">${project.currentRate}<span className="text-xl text-gray-400">/hr</span></div>
+                      <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                        <Clock className="h-3 w-3" />
                         Last updated: {project.lastUpdated}
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <div className="text-lg text-yellow-400">No rate set</div>
-                      <p className="text-xs text-gray-400">
-                        Set your hourly rate to enable time tracking
+                    <div className="p-5 bg-gradient-to-br from-orange-900/20 to-orange-800/10 border border-orange-800/30 rounded-xl">
+                      <div className="flex items-center gap-3 mb-2">
+                        <AlertCircle className="h-5 w-5 text-orange-400" />
+                        <span className="text-sm font-medium text-orange-300">No Rate Set</span>
+                      </div>
+                      <p className="text-sm text-gray-300">
+                        Set your hourly rate to enable time tracking and billing for this project.
                       </p>
                     </div>
                   )}
                 </div>
 
                 {/* Rate Setup Actions */}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-300 mb-3">Quick Set Rate</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleQuickRateSet(project, 25)}
-                      disabled={updatingRates.has(project.id)}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs"
-                    >
-                      {updatingRates.has(project.id) ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        '$25/hr'
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleQuickRateSet(project, 50)}
-                      disabled={updatingRates.has(project.id)}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs"
-                    >
-                      {updatingRates.has(project.id) ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        '$50/hr'
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleQuickRateSet(project, 75)}
-                      disabled={updatingRates.has(project.id)}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs"
-                    >
-                      {updatingRates.has(project.id) ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        '$75/hr'
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleQuickRateSet(project, 100)}
-                      disabled={updatingRates.has(project.id)}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs"
-                    >
-                      {updatingRates.has(project.id) ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        '$100/hr'
-                      )}
-                    </Button>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-purple-900/30 rounded-lg border border-purple-800/30">
+                      <Clock className="h-4 w-4 text-purple-400" />
+                    </div>
+                    <h4 className="text-sm font-semibold text-white">Quick Set Rate</h4>
                   </div>
-                  <div className="mt-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[25, 50, 75, 100].map((rate) => (
+                      <Button
+                        key={rate}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleQuickRateSet(project, rate)}
+                        disabled={updatingRates.has(project.id)}
+                        className="border-gray-700 bg-gray-800/50 text-gray-300 hover:bg-purple-600 hover:border-purple-600 hover:text-white transition-all hover:scale-105 font-semibold h-11"
+                      >
+                        {updatingRates.has(project.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          `$${rate}/hr`
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="pt-2">
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => handleDetailedRateSetup(project)}
-                      className="border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white text-xs w-full"
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full h-11 font-semibold hover:scale-105 transition-transform shadow-lg"
                     >
-                      <DollarSign className="mr-2 h-3 w-3" />
+                      <DollarSign className="mr-2 h-4 w-4" />
                       Set Custom Rate
                     </Button>
-                    <p className="text-xs text-gray-400 mt-2 text-center">
-                      Click a rate above to set instantly, or set a custom rate
+                    <p className="text-xs text-gray-500 mt-3 text-center">
+                      Click a preset or create a custom rate
                     </p>
                   </div>
                 </div>
@@ -371,27 +350,67 @@ const UserProjectRates: React.FC = () => {
       </div>
 
       {/* Help Section */}
-      <Card className="bg-gradient-to-br from-blue-900/20 to-blue-800/20 border-blue-500/50">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-blue-400" />
-            About Project Rates
-          </CardTitle>
+      <Card className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 border-blue-800/50 shadow-xl rounded-xl overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-900/30 to-blue-800/20 border-b border-blue-800/30 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 bg-blue-900/40 rounded-xl border border-blue-800/50">
+              <DollarSign className="h-6 w-6 text-blue-400" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold text-white">About Project Rates</CardTitle>
+              <p className="text-sm text-blue-200/80 mt-1">Understanding how billing rates work</p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3 text-sm text-gray-300">
-            <p>
-              <strong>Why set rates?</strong> Your hourly rate determines how your time is billed when tracking time on projects.
-            </p>
-            <p>
-              <strong>Rate flexibility:</strong> You can set different rates for different projects based on complexity, requirements, or your role.
-            </p>
-            <p>
-              <strong>Rate changes:</strong> You can update your rates anytime. Changes apply to new time entries but don't affect historical data.
-            </p>
-            <p>
-              <strong>Billing:</strong> When you track time, the system automatically uses your project rate for billing calculations.
-            </p>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-blue-900/30 rounded-lg border border-blue-800/30 mt-0.5">
+                  <CheckCircle className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Why set rates?</p>
+                  <p className="text-sm text-gray-400 mt-1">Your hourly rate determines how your time is billed when tracking time on projects.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-blue-900/30 rounded-lg border border-blue-800/30 mt-0.5">
+                  <Building className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Rate flexibility</p>
+                  <p className="text-sm text-gray-400 mt-1">Set different rates for different projects based on complexity, requirements, or your role.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-blue-900/30 rounded-lg border border-blue-800/30 mt-0.5">
+                  <Clock className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Rate changes</p>
+                  <p className="text-sm text-gray-400 mt-1">Update rates anytime. Changes apply to new time entries but don't affect historical data.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-blue-900/30 rounded-lg border border-blue-800/30 mt-0.5">
+                  <DollarSign className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Automatic billing</p>
+                  <p className="text-sm text-gray-400 mt-1">When you track time, the system automatically uses your project rate for billing calculations.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

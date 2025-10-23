@@ -38,7 +38,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   setIsCollapsed,
-  activeItem = "Timer",
+  activeItem = "",
   onNavigate,
 }) => {
   const [expandedSections, setExpandedSections] = useState({
@@ -135,9 +135,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       ...sidebarItems.analyze,
       ...sidebarItems.manage,
     ];
-    const currentItem = allItems.find(
+    
+    // First try exact match
+    let currentItem = allItems.find(
       (item) => item.path === location.pathname
     );
+    
+    // If no exact match, try matching by path prefix (for nested routes like /projects/:id)
+    if (!currentItem) {
+      currentItem = allItems.find(
+        (item) => location.pathname.startsWith(item.path) && item.path !== '/'
+      );
+    }
+    
     return currentItem?.label || activeItem;
   };
 

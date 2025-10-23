@@ -1,36 +1,16 @@
 import React from 'react';
-import { ChevronDown, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 interface ProjectFiltersProps {
-  showArchived: boolean;
-  onShowArchivedChange: (show: boolean) => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
 }
 
 export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
-  showArchived,
-  onShowArchivedChange,
   searchQuery = '',
   onSearchChange,
 }) => {
-  const filterOptions = [
-    { key: 'all', label: 'Show All' },
-    { key: 'all-except-archived', label: 'Show All, except Archived' },
-    { key: 'active', label: 'Show Active only' },
-    { key: 'archived', label: 'Show Archived only' },
-  ];
-
-  const currentFilter = showArchived ? 'all' : 'all-except-archived';
-
   return (
     <div className="flex items-center gap-4 px-6 py-4 bg-gray-950 border-b border-gray-800">
       {/* Search Input */}
@@ -43,30 +23,6 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
           className="pl-10 bg-gray-900 border-gray-800 text-gray-300 placeholder-gray-500 focus:border-purple-600 focus:ring-purple-600"
         />
       </div>
-
-      {/* Show Filter Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            {filterOptions.find(opt => opt.key === currentFilter)?.label}
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-gray-900 border-gray-800">
-          {filterOptions.map((option) => (
-            <DropdownMenuItem
-              key={option.key}
-              onClick={() => onShowArchivedChange(option.key === 'all')}
-              className="text-gray-300 hover:bg-gray-800 hover:text-white"
-            >
-              {option.label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 };

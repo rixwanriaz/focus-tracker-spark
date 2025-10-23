@@ -130,66 +130,91 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gray-800 border-gray-700">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-white">Project Expenses</CardTitle>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={expensesLoading}
-              className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${expensesLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-            <Button className="bg-pink-500 hover:bg-pink-600" onClick={() => setCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Expense
-            </Button>
+      <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-800/50 p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Project Expenses
+            </CardTitle>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={expensesLoading}
+                className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white hover:scale-105 transition-all"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${expensesLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:scale-105 transition-transform" 
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Expense
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {expensesError && (
-            <div className="p-4 text-red-400 text-sm">{expensesError}</div>
+            <div className="p-4 text-red-400 text-sm bg-red-900/20 border-l-4 border-red-500 m-4">{expensesError}</div>
           )}
           <div className="overflow-x-auto">
             <Table className="min-w-full">
               <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-300">Date</TableHead>
-                  <TableHead className="text-gray-300">Category</TableHead>
-                  <TableHead className="text-gray-300">Description</TableHead>
-                  <TableHead className="text-gray-300">Amount</TableHead>
-                  <TableHead className="text-gray-300">Actions</TableHead>
+                <TableRow className="border-gray-800">
+                  <TableHead className="text-gray-300 font-semibold">Date</TableHead>
+                  <TableHead className="text-gray-300 font-semibold">Category</TableHead>
+                  <TableHead className="text-gray-300 font-semibold">Description</TableHead>
+                  <TableHead className="text-gray-300 font-semibold">Amount</TableHead>
+                  <TableHead className="text-gray-300 font-semibold text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {list.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-gray-400 py-6">
-                      No expenses yet
+                    <TableCell colSpan={5} className="text-center text-gray-400 py-12">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="p-3 bg-gray-800 rounded-full">
+                          <Plus className="h-6 w-6 text-gray-500" />
+                        </div>
+                        <p className="text-lg">No expenses yet</p>
+                        <p className="text-sm text-gray-500">Add your first expense to get started</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   list.map((exp) => (
-                    <TableRow key={exp.id} className="border-gray-800">
+                    <TableRow key={exp.id} className="border-gray-800 hover:bg-gray-800/50 transition-colors">
                       <TableCell className="text-gray-300 text-sm">
-                        {new Date(exp.created_at).toLocaleDateString()}
+                        {new Date(exp.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </TableCell>
-                      <TableCell className="text-gray-200 text-sm">{exp.category}</TableCell>
+                      <TableCell className="text-gray-200 text-sm font-medium">{exp.category}</TableCell>
                       <TableCell className="text-gray-400 text-sm">{exp.description}</TableCell>
-                      <TableCell className="text-gray-200 text-sm">
-                        {exp.currency} {exp.amount.toFixed(2)}
+                      <TableCell className="text-gray-200 text-sm font-semibold">
+                        <span className="text-purple-400">{exp.currency}</span> {exp.amount.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white" onClick={() => onEdit(exp)}>
-                          <PencilLine className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white" onClick={() => onDelete(exp)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-gray-400 hover:text-purple-400 hover:bg-purple-900/20 transition-all" 
+                            onClick={() => onEdit(exp)}
+                          >
+                            <PencilLine className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-gray-400 hover:text-red-400 hover:bg-red-900/20 transition-all" 
+                            onClick={() => onDelete(exp)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -202,33 +227,38 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Expense</DialogTitle>
+        <DialogContent className="bg-gray-900 border-gray-800 text-white shadow-2xl sm:max-w-lg">
+          <DialogHeader className="border-b border-gray-800 pb-4">
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Add Expense
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={submitCreate} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Amount</Label>
+          <form onSubmit={submitCreate} className="space-y-5 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Amount *</Label>
                 <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: parseFloat(e.target.value || "0") }))}
-                  className="bg-gray-800 border-gray-700"
+                  type="text"
+                  inputMode="decimal"
+                  value={form.amount === 0 ? "" : form.amount}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setForm((f) => ({ ...f, amount: val === "" ? 0 : parseFloat(val) }));
+                  }}
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
+                  placeholder="0.00"
                   required
                 />
               </div>
-              <div>
-                <Label>Currency</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Currency *</Label>
                 <Select value={form.currency} onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700">
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white h-11 focus:ring-2 focus:ring-purple-500">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-gray-800 border-gray-700">
                     {currencies.map((c) => (
-                      <SelectItem key={c} value={c} className="text-gray-300">
+                      <SelectItem key={c} value={c} className="text-gray-300 focus:bg-gray-700">
                         {c}
                       </SelectItem>
                     ))}
@@ -236,49 +266,53 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Category</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Category</Label>
                 <Input
                   value={form.category}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  className="bg-gray-800 border-gray-700"
-                  placeholder="Category"
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
+                  placeholder="e.g., Travel, Office"
                 />
               </div>
-              <div>
-                <Label>Incurred At</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Incurred At</Label>
                 <CalendarPicker value={form.incurred_at} onChange={(d) => setForm((f) => ({ ...f, incurred_at: d }))} />
               </div>
             </div>
-            <div>
-              <Label>Description</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-300">Description</Label>
               <Input
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                className="bg-gray-800 border-gray-700"
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
                 placeholder="What was this expense for?"
               />
             </div>
-            <div>
-              <Label>Receipt URL</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-300">Receipt URL (Optional)</Label>
               <Input
                 value={form.receipt_url}
                 onChange={(e) => setForm((f) => ({ ...f, receipt_url: e.target.value }))}
-                className="bg-gray-800 border-gray-700"
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
                 placeholder="https://..."
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setCreateOpen(false)}
-                className="border-gray-700 text-gray-300 hover:bg-gray-800"
+                className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white hover:scale-105 transition-all"
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-pink-500 hover:bg-pink-600">
+              <Button 
+                type="submit" 
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:scale-105 transition-transform"
+              >
+                <Plus className="mr-2 h-4 w-4" />
                 Add Expense
               </Button>
             </div>
@@ -288,33 +322,38 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Expense</DialogTitle>
+        <DialogContent className="bg-gray-900 border-gray-800 text-white shadow-2xl sm:max-w-lg">
+          <DialogHeader className="border-b border-gray-800 pb-4">
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Edit Expense
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={submitEdit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Amount</Label>
+          <form onSubmit={submitEdit} className="space-y-5 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Amount *</Label>
                 <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: parseFloat(e.target.value || "0") }))}
-                  className="bg-gray-800 border-gray-700"
+                  type="text"
+                  inputMode="decimal"
+                  value={form.amount === 0 ? "" : form.amount}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setForm((f) => ({ ...f, amount: val === "" ? 0 : parseFloat(val) }));
+                  }}
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
+                  placeholder="0.00"
                   required
                 />
               </div>
-              <div>
-                <Label>Currency</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Currency *</Label>
                 <Select value={form.currency} onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700">
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white h-11 focus:ring-2 focus:ring-purple-500">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-gray-800 border-gray-700">
                     {currencies.map((c) => (
-                      <SelectItem key={c} value={c} className="text-gray-300">
+                      <SelectItem key={c} value={c} className="text-gray-300 focus:bg-gray-700">
                         {c}
                       </SelectItem>
                     ))}
@@ -322,49 +361,53 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Category</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Category</Label>
                 <Input
                   value={form.category}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  className="bg-gray-800 border-gray-700"
-                  placeholder="Category"
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
+                  placeholder="e.g., Travel, Office"
                 />
               </div>
-              <div>
-                <Label>Incurred At</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-300">Incurred At</Label>
                 <CalendarPicker value={form.incurred_at} onChange={(d) => setForm((f) => ({ ...f, incurred_at: d }))} />
               </div>
             </div>
-            <div>
-              <Label>Description</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-300">Description</Label>
               <Input
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                className="bg-gray-800 border-gray-700"
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
                 placeholder="What was this expense for?"
               />
             </div>
-            <div>
-              <Label>Receipt URL</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-300">Receipt URL (Optional)</Label>
               <Input
                 value={form.receipt_url}
                 onChange={(e) => setForm((f) => ({ ...f, receipt_url: e.target.value }))}
-                className="bg-gray-800 border-gray-700"
+                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-11 transition-all"
                 placeholder="https://..."
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setEditOpen(false)}
-                className="border-gray-700 text-gray-300 hover:bg-gray-800"
+                className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white hover:scale-105 transition-all"
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-pink-500 hover:bg-pink-600">
+              <Button 
+                type="submit" 
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:scale-105 transition-transform"
+              >
+                <PencilLine className="mr-2 h-4 w-4" />
                 Save Changes
               </Button>
             </div>
