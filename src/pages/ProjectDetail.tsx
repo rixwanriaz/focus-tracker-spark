@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { ArrowLeft, Users, Calendar, DollarSign, BarChart3, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  Calendar,
+  DollarSign,
+  BarChart3,
+  RefreshCw,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/Layout";
-import { NewTaskDialog, TaskFiltersComponent, TaskTable } from "@/components/Tasks";
+import {
+  NewTaskDialog,
+  TaskFiltersComponent,
+  TaskTable,
+} from "@/components/Tasks";
 import { ProjectMembersTab } from "@/components/Projects";
 import { ProjectUserCostsTab, ProjectExpensesTab } from "@/components/Finance";
 import { RootState, AppDispatch } from "@/redux/store";
@@ -26,7 +38,13 @@ import {
   setFilters,
   clearFilters,
 } from "@/redux/slice/taskSlice";
-import { Task, TaskFilters, CreateTaskRequest, UpdateTaskRequest, TaskStatus } from "@/redux/api/project";
+import {
+  Task,
+  TaskFilters,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  TaskStatus,
+} from "@/redux/api/project";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -35,15 +53,23 @@ const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-
   // Redux state
-  const { currentProject, projectMembers, projectOverview, loading: projectLoading, loadingMembers } = useSelector(
-    (state: RootState) => state.project
-  );
+  const {
+    currentProject,
+    projectMembers,
+    projectOverview,
+    loading: projectLoading,
+    loadingMembers,
+  } = useSelector((state: RootState) => state.project);
 
-  const { projectTasks, loading: tasksLoading, creating, updating, filters, error: taskError } = useSelector(
-    (state: RootState) => state.task
-  );
+  const {
+    projectTasks,
+    loading: tasksLoading,
+    creating,
+    updating,
+    filters,
+    error: taskError,
+  } = useSelector((state: RootState) => state.task);
 
   // Local state
   const [activeTab, setActiveTab] = useState("tasks");
@@ -53,7 +79,7 @@ const ProjectDetail: React.FC = () => {
   useEffect(() => {
     if (projectId) {
       dispatch(getProjectById(projectId));
-      dispatch(getProjectMembers(projectId)).catch(error => {
+      dispatch(getProjectMembers(projectId)).catch((error) => {
         console.error("Failed to load project members:", error);
       });
       dispatch(getProjectOverview(projectId));
@@ -62,7 +88,10 @@ const ProjectDetail: React.FC = () => {
   }, [dispatch, projectId]);
 
   // Task handlers
-  const handleCreateTask = async (projectId: string, taskData: CreateTaskRequest) => {
+  const handleCreateTask = async (
+    projectId: string,
+    taskData: CreateTaskRequest
+  ) => {
     try {
       await dispatch(createTask({ projectId, data: taskData })).unwrap();
       toast.success("Task created successfully!");
@@ -124,7 +153,7 @@ const ProjectDetail: React.FC = () => {
     const updatedFilters = { ...taskFilters, ...newFilters };
     setTaskFilters(updatedFilters);
     dispatch(setFilters(updatedFilters));
-    
+
     // Reload tasks with new filters
     if (projectId) {
       dispatch(getProjectTasks({ projectId, filters: updatedFilters }));
@@ -148,23 +177,26 @@ const ProjectDetail: React.FC = () => {
   // Get filtered tasks
   const filteredTasks = projectTasks[projectId || ""] || [];
 
-  // Debug logging (remove in production)
-  // console.log("Project ID:", projectId);
-  // console.log("Project Tasks:", projectTasks);
-  // console.log("Filtered Tasks:", filteredTasks);
+  // Calculate total hours from tasks
+  const totalHours = filteredTasks.reduce((total, task) => {
+    if (task.estimate_seconds) {
+      return total + task.estimate_seconds / 3600; // Convert seconds to hours
+    }
+    return total;
+  }, 0);
 
   // Format project members for task assignment
-  const assigneesForFilters = projectMembers.map(member => ({
+  const assigneesForFilters = projectMembers.map((member) => ({
     id: member.user_id,
-    first_name: member.user?.first_name || member.user_email?.split("@")[0] || "",
+    first_name:
+      member.user?.first_name || member.user_email?.split("@")[0] || "",
     last_name: member.user?.last_name || "",
   }));
 
-  const assigneesForDialog = projectMembers.map(member => ({
+  const assigneesForDialog = projectMembers.map((member) => ({
     id: member.user_id,
     email: member.user_email,
   }));
-
 
   if (projectLoading) {
     return (
@@ -181,8 +213,13 @@ const ProjectDetail: React.FC = () => {
       <MainLayout>
         <div className="flex items-center justify-center min-h-screen bg-gray-900">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-white mb-2">Project not found</h2>
-            <Button onClick={() => navigate("/projects")} className="bg-purple-600 hover:bg-purple-700">
+            <h2 className="text-xl font-semibold text-white mb-2">
+              Project not found
+            </h2>
+            <Button
+              onClick={() => navigate("/projects")}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Projects
             </Button>
@@ -214,11 +251,12 @@ const ProjectDetail: React.FC = () => {
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                       {currentProject.name}
                     </h1>
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={cn(
                         "text-xs font-semibold px-3 py-1",
-                        currentProject.is_active || currentProject.status?.toLowerCase() === 'active'
+                        currentProject.is_active ||
+                          currentProject.status?.toLowerCase() === "active"
                           ? "bg-green-900/30 border-green-800 text-green-400"
                           : "bg-gray-800 border-gray-600 text-gray-300"
                       )}
@@ -236,7 +274,9 @@ const ProjectDetail: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Button
                   size="sm"
-                  onClick={() => navigate(`/invoices?project_id=${currentProject.id}`)}
+                  onClick={() =>
+                    navigate(`/invoices?project_id=${currentProject.id}`)
+                  }
                   className="bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 text-white shadow-lg hover:scale-105 transition-transform"
                 >
                   <DollarSign className="mr-2 h-4 w-4" />
@@ -254,8 +294,12 @@ const ProjectDetail: React.FC = () => {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-blue-300 group-hover:text-blue-200 transition-colors">Team Members</p>
-                    <p className="text-3xl font-bold text-white">{projectMembers.length}</p>
+                    <p className="text-sm font-medium text-blue-300 group-hover:text-blue-200 transition-colors">
+                      Team Members
+                    </p>
+                    <p className="text-3xl font-bold text-white">
+                      {projectMembers.length}
+                    </p>
                   </div>
                   <div className="p-3 bg-blue-900/40 rounded-xl border border-blue-800/50 group-hover:bg-blue-900/60 transition-colors">
                     <Users className="h-6 w-6 text-blue-400" />
@@ -263,13 +307,17 @@ const ProjectDetail: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-green-900/30 to-green-800/10 border-green-800/50 hover:border-green-700 transition-all hover:shadow-xl hover:scale-105 group">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-green-300 group-hover:text-green-200 transition-colors">Tasks</p>
-                    <p className="text-3xl font-bold text-white">{filteredTasks.length}</p>
+                    <p className="text-sm font-medium text-green-300 group-hover:text-green-200 transition-colors">
+                      Tasks
+                    </p>
+                    <p className="text-3xl font-bold text-white">
+                      {filteredTasks.length}
+                    </p>
                   </div>
                   <div className="p-3 bg-green-900/40 rounded-xl border border-green-800/50 group-hover:bg-green-900/60 transition-colors">
                     <BarChart3 className="h-6 w-6 text-green-400" />
@@ -277,17 +325,21 @@ const ProjectDetail: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border-purple-800/50 hover:border-purple-700 transition-all hover:shadow-xl hover:scale-105 group">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-purple-300 group-hover:text-purple-200 transition-colors">Due Date</p>
+                    <p className="text-sm font-medium text-purple-300 group-hover:text-purple-200 transition-colors">
+                      Due Date
+                    </p>
                     <p className="text-xl font-bold text-white">
-                      {currentProject.end_date 
-                        ? new Date(currentProject.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                        : "No date"
-                      }
+                      {currentProject?.end_date
+                        ? new Date(currentProject.end_date).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric" }
+                          )
+                        : "No date"}
                     </p>
                   </div>
                   <div className="p-3 bg-purple-900/40 rounded-xl border border-purple-800/50 group-hover:bg-purple-900/60 transition-colors">
@@ -296,17 +348,20 @@ const ProjectDetail: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-orange-900/30 to-orange-800/10 border-orange-800/50 hover:border-orange-700 transition-all hover:shadow-xl hover:scale-105 group">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-orange-300 group-hover:text-orange-200 transition-colors">Budget</p>
+                    <p className="text-sm font-medium text-orange-300 group-hover:text-orange-200 transition-colors">
+                      Budget
+                    </p>
                     <p className="text-xl font-bold text-white">
-                      {currentProject.budget_amount 
-                        ? `${currentProject.budget_currency} ${currentProject.budget_amount.toLocaleString()}`
-                        : "No budget"
-                      }
+                      {currentProject.budget_amount
+                        ? `${
+                            currentProject.budget_currency
+                          } ${currentProject.budget_amount.toLocaleString()}`
+                        : "No budget"}
                     </p>
                   </div>
                   <div className="p-3 bg-orange-900/40 rounded-xl border border-orange-800/50 group-hover:bg-orange-900/60 transition-colors">
@@ -322,37 +377,38 @@ const ProjectDetail: React.FC = () => {
         <div className="px-6 pb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-6 bg-gray-900 border border-gray-800 rounded-xl p-1 shadow-lg">
-              <TabsTrigger 
-                value="tasks" 
+              <TabsTrigger
+                value="tasks"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
               >
                 Tasks
               </TabsTrigger>
-              <TabsTrigger 
-                value="overview" 
+              <TabsTrigger
+                value="overview"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
               >
                 Overview
               </TabsTrigger>
-              <TabsTrigger 
-                value="members" 
+              <TabsTrigger
+                value="members"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
               >
-Team Members              </TabsTrigger>
-              <TabsTrigger 
-                value="timeline" 
+                Team Members{" "}
+              </TabsTrigger>
+              <TabsTrigger
+                value="timeline"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
               >
                 Timeline
               </TabsTrigger>
-              <TabsTrigger 
-                value="costs" 
+              <TabsTrigger
+                value="costs"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
               >
                 Costs
               </TabsTrigger>
-              <TabsTrigger 
-                value="expenses" 
+              <TabsTrigger
+                value="expenses"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
               >
                 Expenses
@@ -378,14 +434,22 @@ Team Members              </TabsTrigger>
                   <div>
                     <h2 className="text-xl font-bold text-white">Tasks</h2>
                     {tasksLoading && (
-                      <p className="text-sm text-gray-400 mt-1">Loading tasks...</p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Loading tasks...
+                      </p>
                     )}
                     {taskError && (
-                      <p className="text-sm text-red-400 mt-1">Error loading tasks: {taskError}</p>
+                      <p className="text-sm text-red-400 mt-1">
+                        Error loading tasks: {taskError}
+                      </p>
                     )}
                     {!tasksLoading && !taskError && (
                       <p className="text-sm text-gray-400 mt-1">
-                        Total: <span className="font-semibold text-purple-400">{filteredTasks.length}</span> tasks
+                        Total:{" "}
+                        <span className="font-semibold text-purple-400">
+                          {filteredTasks.length}
+                        </span>{" "}
+                        tasks
                       </p>
                     )}
                   </div>
@@ -397,7 +461,11 @@ Team Members              </TabsTrigger>
                       disabled={tasksLoading}
                       className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white hover:scale-105 transition-all"
                     >
-                      <RefreshCw className={`mr-2 h-4 w-4 ${tasksLoading ? 'animate-spin' : ''}`} />
+                      <RefreshCw
+                        className={`mr-2 h-4 w-4 ${
+                          tasksLoading ? "animate-spin" : ""
+                        }`}
+                      />
                       Refresh
                     </Button>
                     <NewTaskDialog
@@ -433,37 +501,54 @@ Team Members              </TabsTrigger>
             <TabsContent value="overview" className="mt-6">
               <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl">
                 <CardHeader className="border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800">
-                  <CardTitle className="text-xl font-bold text-white">Project Overview</CardTitle>
+                  <CardTitle className="text-xl font-bold text-white">
+                    Project Overview
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                   {projectOverview ? (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="p-5 bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-800/30 rounded-xl">
-                          <p className="text-sm font-medium text-blue-300 mb-2">Total Tasks</p>
-                          <p className="text-4xl font-bold text-white">{projectOverview.total_tasks}</p>
+                          <p className="text-sm font-medium text-blue-300 mb-2">
+                            Total Tasks
+                          </p>
+                          <p className="text-4xl font-bold text-white">
+                            {projectOverview.total_tasks}
+                          </p>
                         </div>
                         <div className="p-5 bg-gradient-to-br from-green-900/20 to-green-800/10 border border-green-800/30 rounded-xl">
-                          <p className="text-sm font-medium text-green-300 mb-2">Completed Tasks</p>
-                          <p className="text-4xl font-bold text-white">{projectOverview.completed_tasks}</p>
+                          <p className="text-sm font-medium text-green-300 mb-2">
+                            Completed Tasks
+                          </p>
+                          <p className="text-4xl font-bold text-white">
+                            {projectOverview.completed_tasks}
+                          </p>
                         </div>
                       </div>
                       <div className="p-5 bg-gradient-to-br from-purple-900/20 to-purple-800/10 border border-purple-800/30 rounded-xl">
                         <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm font-medium text-purple-300">Progress</p>
+                          <p className="text-sm font-medium text-purple-300">
+                            Progress
+                          </p>
                           <p className="text-2xl font-bold text-white">
-                            {projectOverview.timeline_status?.progress_percentage ?? 0}%
+                            {projectOverview.timeline_status
+                              ?.progress_percentage ?? 0}
+                            %
                           </p>
                         </div>
                         <div className="w-full bg-gray-800 rounded-full h-3 shadow-inner">
-                          <div 
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-500 shadow-lg" 
-                            style={{ width: `${projectOverview.timeline_status?.progress_percentage ?? 0}%` }}
+                          <div
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-500 shadow-lg"
+                            style={{
+                              width: `${
+                                projectOverview.timeline_status
+                                  ?.progress_percentage ?? 0
+                              }%`,
+                            }}
                           ></div>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2">
-                          Complete
-                        </p>
+                        <p className="text-xs text-gray-400 mt-2">Complete</p>
                       </div>
                     </div>
                   ) : (
@@ -483,15 +568,21 @@ Team Members              </TabsTrigger>
             <TabsContent value="timeline" className="mt-6">
               <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl">
                 <CardHeader className="border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800">
-                  <CardTitle className="text-xl font-bold text-white">Project Timeline</CardTitle>
+                  <CardTitle className="text-xl font-bold text-white">
+                    Project Timeline
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="text-center py-16">
                     <div className="inline-block p-4 bg-purple-900/20 rounded-full border border-purple-800/30 mb-4">
                       <Calendar className="h-12 w-12 text-purple-400" />
                     </div>
-                    <p className="text-gray-400 text-lg">Timeline view coming soon...</p>
-                    <p className="text-gray-500 text-sm mt-2">Track project milestones and deadlines</p>
+                    <p className="text-gray-400 text-lg">
+                      Timeline view coming soon...
+                    </p>
+                    <p className="text-gray-500 text-sm mt-2">
+                      Track project milestones and deadlines
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -512,4 +603,3 @@ Team Members              </TabsTrigger>
 };
 
 export default ProjectDetail;
-

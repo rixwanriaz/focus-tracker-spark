@@ -57,9 +57,9 @@ export const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Status Filter */}
-        <div>
+        <div className="lg:col-span-1">
           <label className="text-xs font-medium text-gray-400 mb-1 block">Status</label>
           <Select
             value={filters.status || "all"}
@@ -80,7 +80,7 @@ export const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
         </div>
 
         {/* Priority Filter */}
-        <div>
+        <div className="lg:col-span-1">
           <label className="text-xs font-medium text-gray-400 mb-1 block">Priority</label>
           <Select
             value={filters.priority || "all"}
@@ -102,7 +102,7 @@ export const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
 
         {/* Assignee Filter */}
         {assignees.length > 0 && (
-          <div>
+          <div className="lg:col-span-1">
             <label className="text-xs font-medium text-gray-400 mb-1 block">Assignee</label>
             <Select
               value={filters.assignee_id || "all"}
@@ -124,23 +124,23 @@ export const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
           </div>
         )}
 
-        {/* Due Date Filter */}
-        <div>
+        {/* Due Date Filter - Spans 2 columns for better spacing */}
+        <div className="lg:col-span-2 md:col-span-2">
           <label className="text-xs font-medium text-gray-400 mb-1 block">Due Date</label>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Input
               type="date"
               value={filters.due_from || ""}
               onChange={(e) => onFiltersChange({ due_from: e.target.value || undefined })}
               placeholder="From"
-              className="h-8 text-xs bg-gray-700 border-gray-600 text-white"
+              className="h-8 text-xs bg-gray-700 border-gray-600 text-white flex-1"
             />
             <Input
               type="date"
               value={filters.due_to || ""}
               onChange={(e) => onFiltersChange({ due_to: e.target.value || undefined })}
               placeholder="To"
-              className="h-8 text-xs bg-gray-700 border-gray-600 text-white"
+              className="h-8 text-xs bg-gray-700 border-gray-600 text-white flex-1"
             />
           </div>
         </div>
