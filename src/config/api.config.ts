@@ -9,8 +9,8 @@ export const API_CONFIG = {
   // Base URL for all API requests
   BASE_URL:
     import.meta.env.VITE_API_BASE_URL ||
-    "https://joeltimetracking-cahjhyguh4fcd0hn.canadacentral-01.azurewebsites.net/api/v1",
-  // "https:localhost:8000/api/v1",
+    // "https://joeltimetracking-cahjhyguh4fcd0hn.canadacentral-01.azurewebsites.net/api/v1",
+   "http://localhost:8000/api/v1",
 
   // API Endpoints
   ENDPOINTS: {
@@ -62,6 +62,19 @@ export const API_CONFIG = {
       ACTIVE_TIMER: "/time/timers/active",
       APPLY_IDLE_TRIM: "/time/timers/apply-idle-trim",
       BULK_ADJUST: "/time/entries/bulk-adjust",
+    },
+    REPORTS: {
+      TIME_POST: "/reports/time",
+      TIME_GET: "/reports/time",
+      TIME_CSV: "/reports/time/csv",
+      LEADERBOARD: "/reports/leaderboard",
+      CAPACITY: "/reports/capacity",
+      EXPORTS: "/reports/exports",
+      EXPORT_BY_ID: (exportId: string) => `/reports/${exportId}`,
+    },
+    FORECAST: {
+      BY_PROJECT_POST: (id: string) => `/forecast/project/${id}`,
+      BY_PROJECT_GET: (id: string) => `/forecast/project/${id}`,
     },
     // Add more endpoints as needed
   },

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/Layout';
-import { GanttChart } from '@/components/Reports';
+import { GanttChart, TimeFilters, TimeReportTable, LeaderboardTable, CapacityTable, ExportsPanel, ForecastPanel } from '@/components/Reports';
 import { useAppDispatch, useAppSelector } from '@/hooks/hooks';
 import { getProjects, getGanttChart } from '@/redux/slice/projectSlice';
 import { api } from '@/service/api';
@@ -16,14 +16,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BarChart3, Calendar, TrendingUp, Clock, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { fetchTimeReport, downloadTimeCsv, fetchLeaderboard, fetchCapacity, setLastTimeQuery } from '@/redux/slice/reportsSlice';
+import { useToast } from '@/hooks/use-toast';
+import type { TimeReportQuery } from '@/redux/api/reports';
 
 const Reports: React.FC = () => {
   const dispatch = useAppDispatch();
   const projectState = useAppSelector((state) => state.project);
   const { projects = [], ganttChartData, loadingGantt } = projectState || {};
+  const reportsState = useAppSelector((state) => state.reports);
+  const { timeReport, leaderboard, capacity, loading, lastQuery } = reportsState || ({} as any);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [ganttApiTasks, setGanttApiTasks] = useState<any[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const { toast } = useToast();
+
+  // Time report filters state
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const firstOfMonth = (() => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10); })();
+  const [filters, setFilters] = useState<TimeReportQuery>({
+    from_date: lastQuery?.from_date || firstOfMonth,
+    to_date: lastQuery?.to_date || todayIso,
+    group_by: lastQuery?.group_by || 'project',
+    limit: lastQuery?.limit ?? 50,
+    offset: lastQuery?.offset ?? 0,
+  });
 
   useEffect(() => {
     dispatch(getProjects());
@@ -58,6 +76,53 @@ const Reports: React.FC = () => {
         });
     }
   }, [selectedProjectId, dispatch]);
+
+  // Prefetch basic reports on mount for better UX
+  useEffect(() => {
+    if (!timeReport) {
+      dispatch(fetchTimeReport(filters));
+      dispatch(setLastTimeQuery(filters));
+    }
+    if (!leaderboard) dispatch(fetchLeaderboard({ sort_by: 'profitability', limit: 10 }));
+    if (!capacity) dispatch(fetchCapacity({ from_date: filters.from_date, to_date: filters.to_date }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const runTimeReport = async () => {
+    // basic validation to avoid 422s
+    const from = filters.from_date;
+    const to = filters.to_date;
+    const isIso = (s?: string) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+    if (!isIso(from) || !isIso(to)) {
+      return toast({ title: 'Invalid dates', description: 'Use YYYY-MM-DD format', variant: 'destructive' as any });
+    }
+    if (new Date(from!) > new Date(to!)) {
+      return toast({ title: 'Invalid range', description: 'From date must be before To date', variant: 'destructive' as any });
+    }
+    try {
+      await dispatch(fetchTimeReport(filters)).unwrap();
+      dispatch(setLastTimeQuery(filters));
+    } catch (e: any) {
+      toast({ title: 'Failed to load report', description: String(e), variant: 'destructive' as any });
+    }
+  };
+
+  const onDownloadCsv = async () => {
+    try {
+      const blob = await dispatch(downloadTimeCsv(filters)).unwrap();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `time-report_${filters.from_date || ''}_${filters.to_date || ''}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      a.remove();
+      toast({ title: 'CSV downloaded' });
+    } catch (e: any) {
+      toast({ title: 'CSV download failed', description: String(e), variant: 'destructive' as any });
+    }
+  };
 
   const handleProjectChange = (projectId: string) => {
     setSelectedProjectId(projectId);
@@ -233,63 +298,71 @@ const Reports: React.FC = () => {
           </div>
         )}
 
-        {/* Gantt Chart */}
-        {selectedProjectId ? (
-          <div className="space-y-6">
-            <GanttChart 
-              data={ganttChartData || { project_id: selectedProjectId, tasks: [], milestones: [] }} 
-              loading={loadingGantt}
-              totalTasks={totalTasks}
-              totalCompleted={completedTasks}
-              averageProgress={averageProgress}
-            />
-            
-            {/* Additional Reports Placeholders */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-green-500" />
-                    Progress Overview
-                  </CardTitle>
-                  <CardDescription>Track project completion and milestones</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-gray-400">
-                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Progress analytics coming soon</p>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Tabs: Gantt, Time, Leaderboard, Capacity, Exports, Forecast */}
+        <Tabs defaultValue="gantt" className="space-y-6">
+          <TabsList className="bg-gray-900 border border-gray-800">
+            <TabsTrigger value="gantt">Gantt</TabsTrigger>
+            <TabsTrigger value="time">Time</TabsTrigger>
+            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+            <TabsTrigger value="capacity">Capacity</TabsTrigger>
+            <TabsTrigger value="exports">Exports</TabsTrigger>
+            <TabsTrigger value="forecast">Forecast</TabsTrigger>
+          </TabsList>
 
+          <TabsContent value="gantt">
+            {selectedProjectId ? (
+              <div className="space-y-6">
+                <GanttChart 
+                  data={ganttChartData || { project_id: selectedProjectId, tasks: [], milestones: [] }} 
+                  loading={loadingGantt}
+                  totalTasks={totalTasks}
+                  totalCompleted={completedTasks}
+                  averageProgress={averageProgress}
+                />
+              </div>
+            ) : (
               <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-500" />
-                    Time Tracking Summary
-                  </CardTitle>
-                  <CardDescription>Analyze time spent across tasks</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-gray-400">
-                    <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Time tracking reports coming soon</p>
+                <CardContent className="py-12">
+                  <div className="text-center text-gray-400">
+                    <Calendar className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg">Select a project to view reports</p>
+                    <p className="text-sm mt-2">Choose a project from the dropdown above to see its Gantt chart and analytics</p>
                   </div>
                 </CardContent>
               </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="time">
+            <div className="space-y-4">
+              <TimeFilters
+                value={filters}
+                onChange={setFilters}
+                onSubmit={runTimeReport}
+                onDownloadCsv={onDownloadCsv}
+                loading={loading?.time}
+                csvLoading={loading?.csv}
+              />
+              <TimeReportTable data={timeReport || null} loading={loading?.time} />
             </div>
-          </div>
-        ) : (
-          <Card className="bg-gray-900 border-gray-800">
-            <CardContent className="py-12">
-              <div className="text-center text-gray-400">
-                <Calendar className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">Select a project to view reports</p>
-                <p className="text-sm mt-2">Choose a project from the dropdown above to see its Gantt chart and analytics</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          </TabsContent>
+
+          <TabsContent value="leaderboard">
+            <LeaderboardTable data={leaderboard || null} loading={loading?.leaderboard} />
+          </TabsContent>
+
+          <TabsContent value="capacity">
+            <CapacityTable data={capacity || null} loading={loading?.capacity} />
+          </TabsContent>
+
+          <TabsContent value="exports">
+            <ExportsPanel />
+          </TabsContent>
+
+          <TabsContent value="forecast">
+            <ForecastPanel projectId={selectedProjectId || undefined} />
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );

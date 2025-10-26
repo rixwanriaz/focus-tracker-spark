@@ -6,6 +6,7 @@ import organizationReducer from "./slice/organizationSlice";
 import taskReducer from "./slice/taskSlice";
 import timeReducer from "./slice/timeSlice";
 import financeReducer from "./slice/financeSlice";
+import reportsReducer from "./slice/reportsSlice";
 import { setApiStore } from "../service/api";
 
 export const store = configureStore({
@@ -16,6 +17,7 @@ export const store = configureStore({
     task: taskReducer,
     time: timeReducer,
     finance: financeReducer,
+    reports: reportsReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
 });
