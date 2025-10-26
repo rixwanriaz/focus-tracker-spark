@@ -115,6 +115,65 @@ export interface GanttChartData {
   }>;
 }
 
+// Timeline insight/marker types
+export interface TimelineMarkers {
+  today: string;
+  project_start?: string;
+  project_end?: string;
+  budget_percent_used?: number;
+  forecast_date?: string;
+  forecast_confidence_band?: { low_date: string; high_date: string };
+}
+
+export interface TimelineRiskItem {
+  id: string;
+  title: string;
+  type: "overdue" | "unassigned" | "estimate_overrun" | "unscheduled";
+  severity: "low" | "medium" | "high";
+  details: Record<string, any>;
+}
+
+export interface TimelineCapacityItem {
+  user_id: string;
+  user_email?: string;
+  available_hours: number;
+  booked_hours: number;
+  actual_hours: number;
+  utilization: number;
+  booking_load: number;
+  status: string;
+}
+
+export interface TimelineSummary {
+  project?: { start_date?: string; end_date?: string };
+  tasks?: { total: number; with_dates: number; overdue: number; unassigned: number };
+}
+
+export interface TimelineBaseline {
+  id: string;
+  name: string;
+  created_at: string;
+  tasks: Array<{ id: string; title: string; start_date?: string; end_date?: string; estimate_seconds?: number }>; 
+}
+
+export interface TimelineAnnotation {
+  id: string;
+  date: string;
+  text: string;
+  type: string;
+  task_id: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface TimelineInsights {
+  critical_path_task_ids?: string[];
+  task_slack_days?: Record<string, number>;
+  earned_value?: { cpi?: number; spi?: number; planned_value?: number; earned_value?: number; actual_cost?: number };
+  throughput?: { avg_tasks_per_week?: number };
+  forecast?: { confidence_band?: { p50?: string; p90?: string } };
+}
+
 // Task-related interfaces
 export interface Task {
   id: string;
@@ -345,6 +404,101 @@ export const projectApiService = {
     };
 
     return transformedData;
+  },
+
+  // Timeline: markers
+  getTimelineMarkers: async (projectId: string): Promise<TimelineMarkers> => {
+    const res = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.MARKERS(projectId));
+    return res.data;
+  },
+
+  // Timeline: risks
+  getTimelineRisks: async (projectId: string): Promise<TimelineRiskItem[]> => {
+    const res = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.RISKS(projectId));
+    return res.data;
+  },
+
+  // Timeline: capacity
+  getTimelineCapacity: async (
+    projectId: string,
+    params: { from?: string; to?: string }
+  ): Promise<TimelineCapacityItem[]> => {
+    const search = new URLSearchParams();
+    if (params.from) search.append("from", params.from);
+    if (params.to) search.append("to", params.to);
+    const res = await api.get(
+      `${API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.CAPACITY(projectId)}?${search.toString()}`
+    );
+    return res.data;
+  },
+
+  // Timeline: summary
+  getTimelineSummary: async (projectId: string): Promise<TimelineSummary> => {
+    const res = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.SUMMARY(projectId));
+    return res.data;
+  },
+
+  // Timeline: baselines
+  listBaselines: async (projectId: string): Promise<TimelineBaseline[]> => {
+    const res = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.BASELINES(projectId));
+    return res.data;
+  },
+  createBaseline: async (projectId: string, name: string): Promise<TimelineBaseline> => {
+    const res = await api.post(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.BASELINES(projectId), { name });
+    return res.data;
+  },
+  deleteBaseline: async (projectId: string, baselineId: string): Promise<void> => {
+    await api.delete(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.BASELINE_BY_ID(projectId, baselineId));
+  },
+
+  // Timeline: annotations
+  listAnnotations: async (projectId: string): Promise<TimelineAnnotation[]> => {
+    const res = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.ANNOTATIONS(projectId));
+    return res.data;
+  },
+  addAnnotation: async (
+    projectId: string,
+    payload: { date: string; text: string; type?: string; task_id?: string | null }
+  ): Promise<TimelineAnnotation> => {
+    const res = await api.post(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.ANNOTATIONS(projectId), payload);
+    return res.data;
+  },
+  deleteAnnotation: async (projectId: string, annotationId: string): Promise<void> => {
+    await api.delete(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.ANNOTATION_BY_ID(projectId, annotationId));
+  },
+
+  // Timeline: insights
+  getTimelineInsights: async (projectId: string): Promise<TimelineInsights> => {
+    const res = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.INSIGHTS(projectId));
+    return res.data;
+  },
+
+  // Timeline: holidays
+  getTimelineHolidays: async (
+    projectId: string,
+    params: { from?: string; to?: string }
+  ): Promise<Array<{ date: string; label: string; scope: string }>> => {
+    const search = new URLSearchParams();
+    if (params.from) search.append("from", params.from);
+    if (params.to) search.append("to", params.to);
+    const res = await api.get(
+      `${API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.HOLIDAYS(projectId)}?${search.toString()}`
+    );
+    return res.data;
+  },
+
+  // Timeline: prefs
+  getTimelinePrefs: async (
+    projectId: string
+  ): Promise<{ zoom?: string; show_weekends?: boolean; compact_rows?: boolean; compare_baseline_id?: string | null }> => {
+    const res = await api.get(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.PREFS(projectId));
+    return res.data;
+  },
+  updateTimelinePrefs: async (
+    projectId: string,
+    prefs: { zoom?: string; show_weekends?: boolean; compact_rows?: boolean; compare_baseline_id?: string | null }
+  ): Promise<void> => {
+    await api.put(API_CONFIG.ENDPOINTS.PROJECTS.TIMELINE.PREFS(projectId), prefs);
   },
 };
 

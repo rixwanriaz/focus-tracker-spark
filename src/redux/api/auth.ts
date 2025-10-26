@@ -136,6 +136,11 @@ export const authApiService = {
   // 10. Get User Permissions
   getUserPermissions: async (): Promise<UserPermissions> => {
     const response = await api.get(API_CONFIG.ENDPOINTS.USER.PERMISSIONS);
-    return response.data;
+    const data = response.data;
+    // Backend may return either { permissions: [...] } or the array directly
+    if (Array.isArray(data)) {
+      return { permissions: data as string[] };
+    }
+    return data as UserPermissions;
   },
 };

@@ -21,7 +21,12 @@ import {
   TaskTable,
 } from "@/components/Tasks";
 import { ProjectMembersTab } from "@/components/Projects";
+import ProjectTimeline from "@/components/Projects/ProjectTimeline";
 import { ProjectUserCostsTab, ProjectExpensesTab } from "@/components/Finance";
+import { CalendarPicker } from "@/components/ui/calendar-picker";
+import { PermissionGate } from "@/components/ui/PermissionGate";
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, XAxis, YAxis } from "recharts";
 import { RootState, AppDispatch } from "@/redux/store";
 import {
   getProjectById,
@@ -47,6 +52,8 @@ import {
 } from "@/redux/api/project";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { fetchProjectFinancials, fetchProjectUserCosts, fetchMyProjectCost } from "@/redux/slice/financeSlice";
+import { getForecast } from "@/redux/slice/reportsSlice";
 
 const ProjectDetail: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -74,6 +81,8 @@ const ProjectDetail: React.FC = () => {
   // Local state
   const [activeTab, setActiveTab] = useState("tasks");
   const [taskFilters, setTaskFilters] = useState<TaskFilters>({});
+  const [startDate, setStartDate] = useState<Date | undefined>(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999));
 
   // Load project data
   useEffect(() => {
@@ -84,8 +93,20 @@ const ProjectDetail: React.FC = () => {
       });
       dispatch(getProjectOverview(projectId));
       dispatch(getProjectTasks({ projectId }));
+      // Finance + forecast summary
+      dispatch(fetchProjectFinancials(projectId));
+      dispatch(getForecast({ projectId }));
     }
   }, [dispatch, projectId]);
+
+  // Fetch per-user costs on date changes
+  useEffect(() => {
+    if (!projectId) return;
+    const start = startDate ? startDate.toISOString() : undefined;
+    const end = endDate ? endDate.toISOString() : undefined;
+    dispatch(fetchProjectUserCosts({ project_id: projectId, start, end }));
+    dispatch(fetchMyProjectCost({ project_id: projectId, start, end }));
+  }, [dispatch, projectId, startDate, endDate]);
 
   // Task handlers
   const handleCreateTask = async (
@@ -197,6 +218,28 @@ const ProjectDetail: React.FC = () => {
     id: member.user_id,
     email: member.user_email,
   }));
+
+  // Finance + forecast state
+  const financeState = useSelector((s: RootState) => s.finance);
+  const reportsState = useSelector((s: RootState) => s.reports);
+  const financials = financeState.projectFinancials[currentProject?.id || ""];
+  const userCostsKey = `${projectId || ""}|${startDate ? startDate.toISOString() : ""}|${endDate ? endDate.toISOString() : ""}`;
+  const userCosts = financeState.projectUserCosts[userCostsKey];
+  const forecast = reportsState.forecast[currentProject?.id || ""];
+
+  const currency = currentProject?.budget_currency || financials?.currency || "USD";
+  const budgetTotal = currentProject?.budget_amount ?? financials?.budget_amount ?? 0;
+  const laborCost = financials?.freelancer_cost ?? 0;
+  const expensesCost = financials?.expenses ?? 0;
+  const spent = laborCost + expensesCost;
+  const remaining = Math.max(0, (budgetTotal || 0) - spent);
+
+  // Burn rate (simple): spent / days elapsed (in selected range if present)
+  const rangeStart = startDate || (currentProject?.start_date ? new Date(currentProject.start_date) : undefined);
+  const rangeEnd = endDate || new Date();
+  const daysElapsed = rangeStart ? Math.max(1, Math.ceil(((rangeEnd as Date).getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24))) : undefined;
+  const burnPerDay = daysElapsed ? spent / daysElapsed : undefined;
+  const daysToExhaust = burnPerDay && burnPerDay > 0 ? Math.max(0, Math.floor(remaining / burnPerDay)) : undefined;
 
   if (projectLoading) {
     return (
@@ -499,66 +542,104 @@ const ProjectDetail: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="overview" className="mt-6">
-              <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl">
-                <CardHeader className="border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800">
-                  <CardTitle className="text-xl font-bold text-white">
-                    Project Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {projectOverview ? (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="p-5 bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-800/30 rounded-xl">
-                          <p className="text-sm font-medium text-blue-300 mb-2">
-                            Total Tasks
-                          </p>
-                          <p className="text-4xl font-bold text-white">
-                            {projectOverview.total_tasks}
-                          </p>
-                        </div>
-                        <div className="p-5 bg-gradient-to-br from-green-900/20 to-green-800/10 border border-green-800/30 rounded-xl">
-                          <p className="text-sm font-medium text-green-300 mb-2">
-                            Completed Tasks
-                          </p>
-                          <p className="text-4xl font-bold text-white">
-                            {projectOverview.completed_tasks}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="p-5 bg-gradient-to-br from-purple-900/20 to-purple-800/10 border border-purple-800/30 rounded-xl">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm font-medium text-purple-300">
-                            Progress
-                          </p>
-                          <p className="text-2xl font-bold text-white">
-                            {projectOverview.timeline_status
-                              ?.progress_percentage ?? 0}
-                            %
-                          </p>
-                        </div>
-                        <div className="w-full bg-gray-800 rounded-full h-3 shadow-inner">
-                          <div
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-500 shadow-lg"
-                            style={{
-                              width: `${
-                                projectOverview.timeline_status
-                                  ?.progress_percentage ?? 0
-                              }%`,
-                            }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-2">Complete</p>
-                      </div>
+              {/* Date range filter */}
+              <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl mb-6">
+                <CardContent className="p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Start date</p>
+                      <CalendarPicker value={startDate} onChange={setStartDate} />
                     </div>
-                  ) : (
-                    <div className="text-center py-12 text-gray-400">
-                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mb-4"></div>
-                      <p>Loading project overview...</p>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">End date</p>
+                      <CalendarPicker value={endDate} onChange={setEndDate} />
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
+
+              {/* KPI cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+                <Card className="bg-gradient-to-br from-orange-900/30 to-orange-800/10 border-orange-800/50">
+                  <CardContent className="p-5">
+                    <p className="text-sm text-orange-300">Budget</p>
+                    <p className="text-2xl font-bold text-white mt-1">{currency} {Number(budgetTotal || 0).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 mt-1">Remaining: {currency} {Number(remaining).toLocaleString()}</p>
+                  </CardContent>
+                </Card>
+                <PermissionGate permission="finance:read" fallback={<Card className="bg-gray-900 border-gray-800"><CardContent className="p-5"><p className="text-sm text-gray-400">Spent to date (requires finance access)</p></CardContent></Card>}>
+                  <Card className="bg-gradient-to-br from-green-900/30 to-green-800/10 border-green-800/50">
+                    <CardContent className="p-5">
+                      <p className="text-sm text-green-300">Spent to Date</p>
+                      <p className="text-2xl font-bold text-white mt-1">{currency} {Number(spent).toLocaleString()}</p>
+                      <p className="text-xs text-gray-400 mt-1">Labor {currency} {Number(laborCost).toLocaleString()} · Expenses {currency} {Number(expensesCost).toLocaleString()}</p>
+                    </CardContent>
+                  </Card>
+                </PermissionGate>
+                <Card className="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border-purple-800/50">
+                  <CardContent className="p-5">
+                    <p className="text-sm text-purple-300">Progress</p>
+                    <p className="text-2xl font-bold text-white mt-1">{projectOverview?.timeline_status?.progress_percentage ?? 0}%</p>
+                    <div className="w-full bg-gray-800 rounded-full h-2 mt-2">
+                      <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full" style={{ width: `${projectOverview?.timeline_status?.progress_percentage ?? 0}%` }} />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border-blue-800/50">
+                  <CardContent className="p-5">
+                    <p className="text-sm text-blue-300">Burn & Forecast</p>
+                    <p className="text-2xl font-bold text-white mt-1">{burnPerDay ? `${currency} ${burnPerDay.toFixed(2)}/day` : "—"}</p>
+                    <p className="text-xs text-gray-400 mt-1">Days to Exhaustion: {daysToExhaust ?? "—"}{forecast?.predicted_budget_exhausted_date ? ` · P50 ${new Date(forecast.predicted_budget_exhausted_date).toLocaleDateString()}` : ""}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Team Time & Cost */}
+              <PermissionGate permission="finance:read" fallback={<></>}>
+                <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl mb-6">
+                  <CardHeader className="border-b border-gray-800">
+                    <CardTitle className="text-white">Team Time & Cost</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5">
+                    {userCosts?.users?.length ? (
+                      <ChartContainer config={{ hours: { label: "Hours", color: "#60a5fa" }, cost: { label: "Cost", color: "#34d399" } }} className="h-64">
+                        <BarChart data={userCosts.users.map(u => ({ name: u.user_id, hours: u.hours, cost: u.cost }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                          <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                          <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="hours" fill="var(--color-hours)" />
+                          <Bar dataKey="cost" fill="var(--color-cost)" />
+                          <ChartLegend content={<ChartLegendContent />} />
+                        </BarChart>
+                      </ChartContainer>
+                    ) : (
+                      <p className="text-gray-400 text-sm">No cost data for the selected range.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </PermissionGate>
+
+              {/* Cost breakdown */}
+              <PermissionGate permission="finance:read" fallback={<></>}>
+                <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl">
+                  <CardHeader className="border-b border-gray-800">
+                    <CardTitle className="text-white">Cost Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5">
+                    <div className="text-sm text-gray-300">
+                      <div className="flex items-center gap-3">
+                        <div className="h-3 w-3 rounded-sm" style={{ background: "#34d399" }} />
+                        <span>Labor: {currency} {Number(laborCost).toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="h-3 w-3 rounded-sm" style={{ background: "#f97316" }} />
+                        <span>Expenses: {currency} {Number(expensesCost).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </PermissionGate>
             </TabsContent>
 
             <TabsContent value="members" className="mt-6">
@@ -566,26 +647,7 @@ const ProjectDetail: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="timeline" className="mt-6">
-              <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl">
-                <CardHeader className="border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800">
-                  <CardTitle className="text-xl font-bold text-white">
-                    Project Timeline
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="text-center py-16">
-                    <div className="inline-block p-4 bg-purple-900/20 rounded-full border border-purple-800/30 mb-4">
-                      <Calendar className="h-12 w-12 text-purple-400" />
-                    </div>
-                    <p className="text-gray-400 text-lg">
-                      Timeline view coming soon...
-                    </p>
-                    <p className="text-gray-500 text-sm mt-2">
-                      Track project milestones and deadlines
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              {projectId && <ProjectTimeline projectId={projectId} />}
             </TabsContent>
 
             <TabsContent value="costs" className="mt-6">

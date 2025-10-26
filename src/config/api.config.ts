@@ -38,6 +38,22 @@ export const API_CONFIG = {
       BUDGET_ADJUST: (id: string) => `/projects/${id}/budget/adjust`,
       OVERVIEW: (id: string) => `/projects/${id}/overview`,
       GANTT: (id: string) => `/projects/${id}/gantt`,
+      TIMELINE: {
+        MARKERS: (id: string) => `/projects/${id}/timeline/markers`,
+        RISKS: (id: string) => `/projects/${id}/timeline/risks`,
+        CAPACITY: (id: string) => `/projects/${id}/timeline/capacity`,
+        SUMMARY: (id: string) => `/projects/${id}/timeline/summary`,
+        BASELINES: (id: string) => `/projects/${id}/timeline/baselines`,
+        BASELINE_BY_ID: (projectId: string, baselineId: string) =>
+          `/projects/${projectId}/timeline/baselines/${baselineId}`,
+        ANNOTATIONS: (id: string) => `/projects/${id}/timeline/annotations`,
+        ANNOTATION_BY_ID: (projectId: string, annotationId: string) =>
+          `/projects/${projectId}/timeline/annotations/${annotationId}`,
+        INSIGHTS: (id: string) => `/projects/${id}/timeline/insights`,
+        HOLIDAYS: (id: string) => `/projects/${id}/timeline/holidays`,
+        PREFS: (id: string) => `/projects/${id}/timeline/prefs`,
+        EXPORT: (id: string) => `/projects/${id}/timeline/export`,
+      },
     },
     TASKS: {
       BASE: "/tasks",
