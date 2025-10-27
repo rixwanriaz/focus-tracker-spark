@@ -160,42 +160,31 @@ const Payouts: React.FC = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gray-950 text-white p-8">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Payouts</h1>
-              <p className="text-gray-400">Manage freelancer payouts</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <Label className="text-gray-300">Filter by Freelancer</Label>
-                <Input
-                  placeholder="freelancer_user_id"
-                  value={filterFreelancerId}
-                  onChange={(e) => setFilterFreelancerId(e.target.value)}
-                  className="bg-gray-800 border-gray-700"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-gray-300">Export from</Label>
-                <Input
-                  type="date"
-                  value={exportFrom}
-                  onChange={(e) => setExportFrom(e.target.value)}
-                  className="bg-gray-800 border-gray-700"
-                />
-                <Button variant="outline" onClick={handleExportCsv} className="border-gray-700 text-gray-300">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export CSV
-                </Button>
-              </div>
-              <Button className="bg-pink-500 hover:bg-pink-600" onClick={() => setCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Payout
-              </Button>
-            </div>
+    <div className="w-full">
+      <div className="space-y-6">
+          <div className="flex items-center justify-end gap-3">
+            <Label className="text-gray-300 text-sm">Filter by Freelancer</Label>
+            <Input
+              placeholder="freelancer_user_id"
+              value={filterFreelancerId}
+              onChange={(e) => setFilterFreelancerId(e.target.value)}
+              className="bg-gray-800 border-gray-700 w-48"
+            />
+            <Label className="text-gray-300 text-sm">Export from</Label>
+            <Input
+              type="date"
+              value={exportFrom}
+              onChange={(e) => setExportFrom(e.target.value)}
+              className="bg-gray-800 border-gray-700 w-44"
+            />
+            <Button variant="outline" onClick={handleExportCsv} className="border-gray-700 text-gray-300">
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button className="bg-pink-500 hover:bg-pink-600" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Payout
+            </Button>
           </div>
 
           <Card className="bg-gray-900 border-gray-800">
@@ -345,9 +334,8 @@ const Payouts: React.FC = () => {
               </form>
             </DialogContent>
           </Dialog>
-        </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

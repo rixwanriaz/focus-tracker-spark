@@ -79,17 +79,6 @@ export const ManualTimeEntryDialog: React.FC<ManualTimeEntryDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate project and task selection
-    if (!projectId) {
-      toast.error('Please select a project');
-      return;
-    }
-
-    if (!taskId) {
-      toast.error('Please select a task');
-      return;
-    }
-
     // Validate times
     const [startHour, startMin] = startTime.split(':').map(Number);
     const [endHour, endMin] = endTime.split(':').map(Number);
@@ -110,8 +99,8 @@ export const ManualTimeEntryDialog: React.FC<ManualTimeEntryDialogProps> = ({
         createManualEntry({
           start_ts: startDate.toISOString(),
           end_ts: endDate.toISOString(),
-          project_id: projectId,
-          task_id: taskId,
+          project_id: projectId || undefined,
+          task_id: taskId || undefined,
           notes: description || undefined,
           billable,
           allow_overlap: allowOverlap,
@@ -152,7 +141,7 @@ export const ManualTimeEntryDialog: React.FC<ManualTimeEntryDialogProps> = ({
           <DialogHeader>
             <DialogTitle>Add Manual Time Entry</DialogTitle>
             <DialogDescription>
-              Create a time entry manually by entering the start and end times.
+              Create a time entry manually. Project and task are optional - track unassigned time or link to specific work.
             </DialogDescription>
           </DialogHeader>
 
@@ -211,11 +200,11 @@ export const ManualTimeEntryDialog: React.FC<ManualTimeEntryDialogProps> = ({
             {/* Project Selector */}
             <div className="grid gap-2">
               <Label htmlFor="project">
-                Project <span className="text-red-500">*</span>
+                Project <span className="text-gray-500 text-xs">(Optional)</span>
               </Label>
               <Select value={projectId} onValueChange={setProjectId}>
                 <SelectTrigger id="project">
-                  <SelectValue placeholder="Select a project" />
+                  <SelectValue placeholder="Select a project (optional)" />
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((project) => (
@@ -231,7 +220,7 @@ export const ManualTimeEntryDialog: React.FC<ManualTimeEntryDialogProps> = ({
             {projectId && (
               <div className="grid gap-2">
                 <Label htmlFor="task">
-                  Task <span className="text-red-500">*</span>
+                  Task <span className="text-gray-500 text-xs">(Optional)</span>
                 </Label>
                 <Select
                   value={taskId}
@@ -239,7 +228,7 @@ export const ManualTimeEntryDialog: React.FC<ManualTimeEntryDialogProps> = ({
                   disabled={tasksLoading}
                 >
                   <SelectTrigger id="task">
-                    <SelectValue placeholder="Select a task" />
+                    <SelectValue placeholder="Select a task (optional)" />
                   </SelectTrigger>
                   <SelectContent>
                     {tasks.map((task: Task) => (

@@ -281,15 +281,10 @@ const Invoices: React.FC = () => {
     .reduce((sum, inv) => sum + inv.amount, 0);
 
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gray-950 text-white p-8">
-        <div className="max-w-7xl mx-auto">
+    <div className="w-full">
+      <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Invoices</h1>
-              <p className="text-gray-400">Create and manage invoices for your clients</p>
-            </div>
+          <div className="flex items-center justify-end">
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-pink-500 hover:bg-pink-600 text-white">
@@ -678,9 +673,8 @@ const Invoices: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

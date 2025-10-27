@@ -179,21 +179,10 @@ export const TimerModule: React.FC = () => {
 
   // Timer handlers
   const handleStartTimer = async () => {
-    // Validate project and task selection
-    if (!timerState.project_id) {
-      toast.error('Please select a project before starting the timer');
-      return;
-    }
-
-    if (!timerState.task_id) {
-      toast.error('Please select a task before starting the timer');
-      return;
-    }
-
     try {
       await dispatch(startTimer({
-        project_id: timerState.project_id,
-        task_id: timerState.task_id,
+        project_id: timerState.project_id || undefined,
+        task_id: timerState.task_id || undefined,
         notes: timerState.currentDescription,
         billable: timerState.billable,
       })).unwrap();

@@ -116,24 +116,19 @@ export const TimerInput: React.FC<TimerInputProps> = ({
                       )}
                       disabled={timerState.isRunning}
                       title={
-                        !timerState.project_id 
-                          ? "Select project and task (Required)" 
-                          : !timerState.task_id 
-                          ? "Select task (Required)" 
-                          : "Project and task selected"
+                        timerState.project_id && timerState.task_id
+                          ? "Project and task selected" 
+                          : "Select project and task (Optional)"
                       }
                     >
                       <FolderOpen className="h-4 w-4" />
-                      {(!timerState.project_id || !timerState.task_id) && !timerState.isRunning && (
-                        <span className="absolute [inset-block-start:-0.125rem] [inset-inline-end:-0.125rem] h-2 w-2 bg-red-500 rounded-full" />
-                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-0" align="end">
                     <div className="p-3 space-y-3">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">
-                          Project <span className="text-red-500">*</span>
+                          Project <span className="text-gray-500 text-xs">(Optional)</span>
                         </label>
                         <Select 
                           value={timerState.project_id || ''} 
@@ -155,7 +150,7 @@ export const TimerInput: React.FC<TimerInputProps> = ({
                       {timerState.project_id && (
                         <div className="space-y-2">
                           <label className="text-sm font-medium">
-                            Task <span className="text-red-500">*</span>
+                            Task <span className="text-gray-500 text-xs">(Optional)</span>
                           </label>
                           <Select 
                             value={timerState.task_id || ''} 
@@ -183,7 +178,7 @@ export const TimerInput: React.FC<TimerInputProps> = ({
                       
                       {!timerState.project_id && (
                         <p className="text-xs text-gray-500">
-                          Select a project to see available tasks
+                          Select a project to see available tasks, or leave empty to track unassigned time
                         </p>
                       )}
                     </div>
@@ -218,20 +213,15 @@ export const TimerInput: React.FC<TimerInputProps> = ({
             
             {/* Selected Project/Task Display */}
             <div className="flex items-center gap-2 text-xs px-2">
-              {!selectedProject && !timerState.isRunning && (
-                <span className="flex items-center gap-1 text-red-400">
-                  <span className="h-1.5 w-1.5 bg-red-500 rounded-full" />
-                  Project and task required
+              {!selectedProject && !selectedTask && (
+                <span className="text-gray-500">
+                  No project selected
                 </span>
               )}
-              {selectedProject && !selectedTask && !timerState.isRunning && (
-                <span className="flex items-center gap-1 text-yellow-400">
+              {selectedProject && !selectedTask && (
+                <span className="flex items-center gap-1 text-gray-400">
                   <FolderOpen className="h-3 w-3" />
                   {selectedProject.name}
-                  <span className="ml-2 flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 bg-yellow-500 rounded-full" />
-                    Task required
-                  </span>
                 </span>
               )}
               {selectedProject && selectedTask && (
