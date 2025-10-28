@@ -10,8 +10,11 @@ export interface TimeEntry {
   organization_id: string;
   user_id: string;
   project_id?: string;
+  project_name?: string;
   task_id?: string;
+  task_name?: string;
   description?: string;
+  notes?: string;
   start_ts: string;
   end_ts?: string;
   duration_seconds?: number;

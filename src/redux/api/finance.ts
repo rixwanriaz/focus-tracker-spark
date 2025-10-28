@@ -120,7 +120,7 @@ export interface MyProjectCostOut {
 }
 
 export interface ProjectUserCostItem {
-  user_id: string;
+  user_email: string;
   hours: number;
   cost: number;
   currency: string;

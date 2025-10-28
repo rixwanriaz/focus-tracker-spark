@@ -82,6 +82,56 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
+  // Lay out entries horizontally to avoid overlap by assigning columns per overlapping cluster
+  type LaidOutEntry = { entry: TimeEntry; col: number; cols: number };
+  const layoutEntries = (entries: TimeEntry[]): LaidOutEntry[] => {
+    // Prepare items with start/end in minutes from midnight
+    const items = entries
+      .map((e) => {
+        const start = e.startTime.getHours() * 60 + e.startTime.getMinutes();
+        const durationMinutes = Math.max(Math.round(e.duration / 60), 5); // ensure minimal span
+        const end = start + durationMinutes;
+        return { entry: e, start, end, col: 0, cols: 1 };
+      })
+      .sort((a, b) => (a.start - b.start) || (a.end - b.end));
+
+    const result: LaidOutEntry[] = [];
+    let cluster: typeof items = [];
+    let clusterEnd = -1;
+
+    const finalizeCluster = () => {
+      if (cluster.length === 0) return;
+      const columnEnds: number[] = [];
+      cluster.forEach((item) => {
+        let colIndex = 0;
+        while (columnEnds[colIndex] && columnEnds[colIndex] > item.start) {
+          colIndex++;
+        }
+        item.col = colIndex;
+        columnEnds[colIndex] = item.end;
+      });
+      const totalCols = Math.max(1, columnEnds.length);
+      cluster.forEach((item) => {
+        result.push({ entry: item.entry, col: item.col, cols: totalCols });
+      });
+      cluster = [];
+      clusterEnd = -1;
+    };
+
+    for (const item of items) {
+      if (cluster.length === 0 || item.start < clusterEnd) {
+        cluster.push(item);
+        clusterEnd = Math.max(clusterEnd, item.end);
+      } else {
+        finalizeCluster();
+        cluster.push(item);
+        clusterEnd = item.end;
+      }
+    }
+    finalizeCluster();
+    return result;
+  };
+
   // Filter to show only the selected day in day mode
   const displayDays = viewMode === "day" ? [weekDays[0]] : weekDays;
 
@@ -186,15 +236,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     );
                   })}
 
-                  {/* Time Entries for the single day */}
-                  {day.entries.map((entry) => {
+                  {/* Time Entries for the single day (non-overlapping layout) */}
+                  {layoutEntries(day.entries).map(({ entry, col, cols }) => {
                     const { top, height } = getEntryPosition(entry);
                     const colorClass = getEntryColor(entry);
+                    const leftPercent = (col / cols) * 100;
+                    const widthPercent = 100 / cols;
                     return (
                       <div
                         key={entry.id}
                         className={cn(
-                          "absolute left-1 right-1 rounded-md px-2 py-1.5 cursor-pointer",
+                          "absolute rounded-md px-2 py-1.5 cursor-pointer",
                           "text-white text-xs shadow-md",
                           "hover:shadow-lg transition-all duration-200",
                           "border-l-3 overflow-hidden group",
@@ -203,6 +255,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
+                          left: `calc(${leftPercent}% + 4px)`,
+                          width: `calc(${widthPercent}% - 8px)`,
                         }}
                         onClick={() => onEntryClick?.(entry)}
                       >
@@ -368,15 +422,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     );
                   })}
 
-                  {/* Time Entries */}
-                  {day.entries.map((entry) => {
+                  {/* Time Entries (non-overlapping layout) */}
+                  {layoutEntries(day.entries).map(({ entry, col, cols }) => {
                     const { top, height } = getEntryPosition(entry);
                     const colorClass = getEntryColor(entry);
+                    const leftPercent = (col / cols) * 100;
+                    const widthPercent = 100 / cols;
                     return (
                       <div
                         key={entry.id}
                         className={cn(
-                          "absolute left-2 right-2 rounded-lg px-3 py-2 cursor-pointer",
+                          "absolute rounded-lg px-3 py-2 cursor-pointer",
                           "text-white text-xs shadow-lg",
                           "hover:shadow-xl hover:scale-[1.02] transition-all duration-200",
                           "border-l-4 border-2 overflow-hidden group",
@@ -385,6 +441,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
+                          left: `calc(${leftPercent}% + 6px)`,
+                          width: `calc(${widthPercent}% - 12px)`,
                         }}
                         onClick={() => onEntryClick?.(entry)}
                       >

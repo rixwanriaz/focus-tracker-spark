@@ -130,8 +130,8 @@ const ProjectUserCostsTab: React.FC<Props> = ({ projectId }) => {
                   </TableHeader>
                   <TableBody>
                     {allCosts.users.map((u) => (
-                      <TableRow key={u.user_id}>
-                        <TableCell className="text-gray-200 text-sm">{u.user_id}</TableCell>
+                      <TableRow key={u.user_email}>
+                        <TableCell className="text-gray-200 text-sm">{u.user_email}</TableCell>
                         <TableCell className="text-gray-200 text-sm">{u.hours.toFixed(2)}</TableCell>
                         <TableCell className="text-gray-200 text-sm">{u.currency} {u.cost.toFixed(2)}</TableCell>
                       </TableRow>

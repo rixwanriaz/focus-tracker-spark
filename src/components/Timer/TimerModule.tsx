@@ -5,6 +5,7 @@ import { TimerInput } from './TimerInput';
 import { WeekNavigator, ViewMode } from './WeekNavigator';
 import { CalendarView } from './CalendarView';
 import { ManualTimeEntryDialog } from './ManualTimeEntryDialog';
+import { TimeEntryDetailsDialog } from './TimeEntryDetailsDialog';
 import { TimerState, WeekDay, TimeEntry } from './types';
 import { Button } from '@/components/ui/button';
 import { Calendar } from 'lucide-react';
@@ -46,6 +47,8 @@ export const TimerModule: React.FC = () => {
   
   // Dialog state
   const [manualEntryDialogOpen, setManualEntryDialogOpen] = useState(false);
+  const [timeEntryDetailsDialogOpen, setTimeEntryDetailsDialogOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<TimeEntry | null>(null);
 
   // Goals and Favorites removed
 
@@ -117,14 +120,21 @@ export const TimerModule: React.FC = () => {
   // Convert API entries to local TimeEntry format
   const convertToLocalEntry = (entry: any): TimeEntry => ({
     id: entry.id,
-    description: entry.description || '',
+    // Prefer backend "notes" as the description fallback to legacy "description"
+    description: entry.notes || entry.description || '',
     startTime: new Date(entry.start_ts),
     endTime: entry.end_ts ? new Date(entry.end_ts) : undefined,
     duration: entry.duration_seconds || 0,
     project_id: entry.project_id,
-    project: entry.project,
+    project: entry.project_name ? {
+      id: entry.project_id || '',
+      name: entry.project_name
+    } : entry.project,
     task_id: entry.task_id,
-    task: entry.task,
+    task: entry.task_name ? {
+      id: entry.task_id || '',
+      title: entry.task_name
+    } : entry.task,
     billable: entry.billable,
     color: '#8b5cf6',
   });
@@ -322,9 +332,18 @@ export const TimerModule: React.FC = () => {
 
   // Entry handlers
   const handleEntryClick = (entry: TimeEntry) => {
-    toast.info(`Entry: ${entry.description}`, {
-      description: `Duration: ${Math.floor(entry.duration / 60)} minutes`,
-    });
+    setSelectedEntry(entry);
+    setTimeEntryDetailsDialogOpen(true);
+  };
+
+  const handleEntryUpdateSuccess = () => {
+    // Reload entries after successful update
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+    const weekEnd = addDays(weekStart, 6);
+    dispatch(listEntries({
+      start: weekStart.toISOString(),
+      end: weekEnd.toISOString(),
+    }));
   };
 
   const handleTimeSlotClick = (date: Date, hour: number) => {
@@ -355,6 +374,16 @@ export const TimerModule: React.FC = () => {
         onOpenChange={setManualEntryDialogOpen}
         projects={projects}
         onSuccess={handleManualEntrySuccess}
+      />
+
+      {/* Time Entry Details Dialog */}
+      <TimeEntryDetailsDialog
+        open={timeEntryDetailsDialogOpen}
+        onOpenChange={setTimeEntryDetailsDialogOpen}
+        entry={selectedEntry}
+        projects={projects}
+        onUpdateSuccess={handleEntryUpdateSuccess}
+        onEntryUpdate={setSelectedEntry}
       />
 
       {/* Week Navigator */}

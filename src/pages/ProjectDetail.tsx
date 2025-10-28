@@ -594,23 +594,51 @@ const ProjectDetail: React.FC = () => {
                 </Card>
               </div>
 
-              {/* Team Time & Cost */}
+              {/* Team Hours */}
               <PermissionGate permission="finance:read" fallback={<></>}>
                 <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl mb-6">
                   <CardHeader className="border-b border-gray-800">
-                    <CardTitle className="text-white">Team Time & Cost</CardTitle>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-blue-400" />
+                      Team Hours
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="p-5">
                     {userCosts?.users?.length ? (
-                      <ChartContainer config={{ hours: { label: "Hours", color: "#60a5fa" }, cost: { label: "Cost", color: "#34d399" } }} className="h-64">
-                        <BarChart data={userCosts.users.map(u => ({ name: u.user_id, hours: u.hours, cost: u.cost }))}>
+                      <ChartContainer config={{ hours: { label: "Hours", color: "#60a5fa" } }} className="h-64">
+                        <BarChart data={userCosts.users.map(u => ({ name: u.user_email, hours: u.hours }))}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                           <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 12 }} />
                           <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} />
                           <ChartTooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="hours" fill="var(--color-hours)" />
-                          <Bar dataKey="cost" fill="var(--color-cost)" />
-                          <ChartLegend content={<ChartLegendContent />} />
+                          <Bar dataKey="hours" fill="var(--color-hours)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ChartContainer>
+                    ) : (
+                      <p className="text-gray-400 text-sm">No cost data for the selected range.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </PermissionGate>
+
+              {/* Team Costs */}
+              <PermissionGate permission="finance:read" fallback={<></>}>
+                <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl mb-6">
+                  <CardHeader className="border-b border-gray-800">
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-emerald-400" />
+                      Team Costs
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5">
+                    {userCosts?.users?.length ? (
+                      <ChartContainer config={{ cost: { label: "Cost", color: "#34d399" } }} className="h-64">
+                        <BarChart data={userCosts.users.map(u => ({ name: u.user_email, cost: u.cost }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                          <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                          <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="cost" fill="var(--color-cost)" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ChartContainer>
                     ) : (
