@@ -81,6 +81,32 @@ export interface ForecastResponse {
   explanation?: string;
 }
 
+export interface DailyTeamTimeItem {
+  user_id: string;
+  user_email: string;
+  project_id: string;
+  project_name: string;
+  date: string;
+  total_hours: number;
+  billable_hours: number;
+}
+
+export interface DailyProjectTimeItem {
+  project_id: string;
+  project_name: string;
+  team_members: DailyTeamTimeItem[];
+}
+
+export interface DailyTeamTimeResponse {
+  date: string;
+  projects: DailyProjectTimeItem[];
+}
+
+export interface DailyTeamTimeQuery {
+  date: string; // ISO date YYYY-MM-DD
+  project_id?: string; // Optional project UUID to filter results
+}
+
 // Service
 export const reportsApi = {
   getTimeReport: async (query: TimeReportQuery): Promise<TimeReportResponse> => {
@@ -140,6 +166,15 @@ export const reportsApi = {
 
   getForecast: async (projectId: string): Promise<ForecastResponse> => {
     const { data } = await api.get(API_CONFIG.ENDPOINTS.FORECAST.BY_PROJECT_GET(projectId));
+    return data;
+  },
+
+  getDailyTeamTimeReport: async (query: DailyTeamTimeQuery): Promise<DailyTeamTimeResponse> => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") params.append(k, String(v));
+    });
+    const { data } = await api.get(`${API_CONFIG.ENDPOINTS.REPORTS.DAILY_TEAM_TIME}?${params.toString()}`);
     return data;
   },
 };

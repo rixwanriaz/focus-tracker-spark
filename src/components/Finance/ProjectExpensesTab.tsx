@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarPicker } from "@/components/ui/calendar-picker";
 import { Plus, PencilLine, Trash2, RefreshCw } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import type { ExpenseOut } from "@/redux/api/finance";
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ interface ExpenseFormData {
   description: string;
   receipt_url?: string;
   incurred_at?: Date;
+  billable: boolean;
 }
 
 const defaultForm: ExpenseFormData = {
@@ -34,6 +36,7 @@ const defaultForm: ExpenseFormData = {
   description: "",
   receipt_url: "",
   incurred_at: undefined,
+  billable: true,
 };
 
 const currencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"];
@@ -69,6 +72,7 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
             description: form.description,
             receipt_url: form.receipt_url || undefined,
             incurred_at: form.incurred_at ? form.incurred_at.toISOString() : undefined,
+            billable: form.billable,
           },
         })
       ).unwrap();
@@ -95,6 +99,7 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
             description: form.description,
             receipt_url: form.receipt_url || undefined,
             incurred_at: form.incurred_at ? form.incurred_at.toISOString() : undefined,
+            billable: form.billable,
           },
         })
       ).unwrap();
@@ -115,6 +120,7 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
       description: exp.description,
       receipt_url: exp.receipt_url,
       incurred_at: undefined,
+      billable: exp.billable ?? true,
     });
     setEditOpen(true);
   };
@@ -281,6 +287,13 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
                 <CalendarPicker value={form.incurred_at} onChange={(d) => setForm((f) => ({ ...f, incurred_at: d }))} />
               </div>
             </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-900/40 px-4 py-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium text-gray-300">Billable</Label>
+                <p className="text-xs text-gray-500">Mark this expense as billable to the client.</p>
+              </div>
+              <Switch checked={form.billable} onCheckedChange={(v) => setForm((f) => ({ ...f, billable: v }))} />
+            </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-300">Description</Label>
               <Input
@@ -375,6 +388,13 @@ const ProjectExpensesTab: React.FC<Props> = ({ projectId }) => {
                 <Label className="text-sm font-medium text-gray-300">Incurred At</Label>
                 <CalendarPicker value={form.incurred_at} onChange={(d) => setForm((f) => ({ ...f, incurred_at: d }))} />
               </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-900/40 px-4 py-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium text-gray-300">Billable</Label>
+                <p className="text-xs text-gray-500">Mark this expense as billable to the client.</p>
+              </div>
+              <Switch checked={form.billable} onCheckedChange={(v) => setForm((f) => ({ ...f, billable: v }))} />
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-300">Description</Label>

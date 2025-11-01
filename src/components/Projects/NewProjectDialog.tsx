@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CalendarPicker } from '@/components/ui/calendar-picker';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -105,42 +104,6 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     });
   }, [members, loadingMembers, error]);
 
-  // Manual test function for debugging (can be removed later)
-  const testOrganizationMembersAPI = async () => {
-    const orgId = getOrganizationId();
-    console.log('Testing organization members API with orgId:', orgId);
-    
-    if (!orgId) {
-      console.error('No organization ID available for testing');
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:8000/api/v1/organizations/${orgId}/members`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('API Response status:', response.status);
-      console.log('API Response headers:', response.headers);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('API Response data:', data);
-      } else {
-        const errorText = await response.text();
-        console.error('API Error:', response.status, errorText);
-      }
-    } catch (error) {
-      console.error('API Call failed:', error);
-    }
-  };
-
-  // Add test button for debugging (remove in production)
-  const showDebugButton = process.env.NODE_ENV === 'development';
-
   // Reset form when dialog is closed
   React.useEffect(() => {
     if (!open) {
@@ -168,10 +131,10 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
       const projectData: CreateProjectRequest = {
         name: formData.name || '',
         description: formData.description || undefined,
-        start_date: formData.start_date 
+        start_date: formData.start_date
           ? formData.start_date.toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0],
-        end_date: formData.end_date 
+        end_date: formData.end_date
           ? formData.end_date.toISOString().split('T')[0]
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         budget_amount: formData.budget_amount || 0,
@@ -181,10 +144,9 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
           color: formData.color,
           privacy: formData.privacy,
           billable: formData.billable,
-          hourlyRateType: formData.hourlyRateType,
-          customRate: formData.customRate,
           access: formData.access,
           inviteMembers: formData.inviteMembers,
+          default_billable_rate: formData.default_billable_rate,
         },
       };
 
@@ -511,17 +473,6 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                     💡 You can add members to this project after creation from the project settings.
                   </p>
                 )}
-                {showDebugButton && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={testOrganizationMembersAPI}
-                    className="text-xs text-gray-400 border-gray-600 hover:text-white hover:border-gray-500"
-                  >
-                    🔧 Test API (Dev Only)
-                  </Button>
-                )}
               </div>
 
               {/* Access */}
@@ -562,27 +513,26 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
                 </button>
               </div>
 
-              {/* Hourly Rate */}
-              <div className="space-y-3">
+              {/* Default Billable Rate */}
+              <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Hourly Rate
+                  Default Billable Rate (USD/h)
                 </Label>
-                <RadioGroup value={formData.hourlyRateType} onValueChange={(value) => setFormData({ ...formData, hourlyRateType: value as any })}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="default" id="default" className="border-gray-600 text-purple-500" />
-                    <Label htmlFor="default" className="text-sm text-gray-300 cursor-pointer flex items-center gap-1">
-                      Default hourly rates
-                      <Info className="w-3 h-3 text-gray-500" />
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="custom" id="custom" className="border-gray-600 text-purple-500" />
-                    <Label htmlFor="custom" className="text-sm text-gray-300 cursor-pointer flex items-center gap-1">
-                      Custom project hourly rate
-                      <Info className="w-3 h-3 text-gray-500" />
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={formData.default_billable_rate || ''}
+                  onChange={(e) => setFormData({ ...formData, default_billable_rate: Number(e.target.value) || 0 })}
+                  placeholder="100"
+                  className={cn(
+                    "bg-gray-900 border-gray-700 text-white placeholder:text-gray-500",
+                    getFieldError('default_billable_rate') && "border-red-500"
+                  )}
+                />
+                {getFieldError('default_billable_rate') && (
+                  <p className="text-red-400 text-xs">{getFieldError('default_billable_rate')}</p>
+                )}
               </div>
             </div>
           </div>

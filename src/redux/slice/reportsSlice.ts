@@ -8,6 +8,8 @@ import {
   ForecastComputeRequest,
   ForecastResponse,
   ExportJobSummary,
+  DailyTeamTimeQuery,
+  DailyTeamTimeResponse,
 } from "../api/reports";
 
 interface ReportsState {
@@ -15,12 +17,14 @@ interface ReportsState {
   leaderboard: LeaderboardResponse | null;
   capacity: CapacityResponse | null;
   forecast: Record<string, ForecastResponse | undefined>; // keyed by projectId
+  dailyTeamTime: Record<string, DailyTeamTimeResponse | undefined>; // keyed by date
   exports: ExportJobSummary[];
   loading: {
     time: boolean;
     leaderboard: boolean;
     capacity: boolean;
     forecast: Record<string, boolean | undefined>;
+    dailyTeamTime: Record<string, boolean | undefined>;
     exports: boolean;
     csv: boolean;
   };
@@ -33,12 +37,14 @@ const initialState: ReportsState = {
   leaderboard: null,
   capacity: null,
   forecast: {},
+  dailyTeamTime: {},
   exports: [],
   loading: {
     time: false,
     leaderboard: false,
     capacity: false,
     forecast: {},
+    dailyTeamTime: {},
     exports: false,
     csv: false,
   },
@@ -122,6 +128,19 @@ export const getForecast = createAsyncThunk<
     return { projectId, data };
   } catch (e: any) {
     return rejectWithValue(e?.response?.data?.detail || e?.message || "Failed to get forecast");
+  }
+});
+
+export const getDailyTeamTimeReport = createAsyncThunk<
+  { date: string; data: DailyTeamTimeResponse },
+  DailyTeamTimeQuery,
+  { rejectValue: string }
+>("reports/getDailyTeamTimeReport", async (query, { rejectWithValue }) => {
+  try {
+    const data = await reportsApi.getDailyTeamTimeReport(query);
+    return { date: query.date, data };
+  } catch (e: any) {
+    return rejectWithValue(e?.response?.data?.detail || e?.message || "Failed to get daily team time report");
   }
 });
 
@@ -249,6 +268,23 @@ const reportsSlice = createSlice({
       })
       .addCase(getForecast.rejected, (state, action) => {
         state.error = action.payload || "Failed to get forecast";
+      })
+
+      // Daily team time report
+      .addCase(getDailyTeamTimeReport.pending, (state, action) => {
+        const date = action.meta.arg.date;
+        state.loading.dailyTeamTime[date] = true;
+        state.error = null;
+      })
+      .addCase(getDailyTeamTimeReport.fulfilled, (state, action) => {
+        const { date, data } = action.payload;
+        state.loading.dailyTeamTime[date] = false;
+        state.dailyTeamTime[date] = data;
+      })
+      .addCase(getDailyTeamTimeReport.rejected, (state, action) => {
+        const date = action.meta.arg.date;
+        state.loading.dailyTeamTime[date] = false;
+        state.error = action.payload || "Failed to get daily team time report";
       })
 
       // Exports

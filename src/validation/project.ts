@@ -59,18 +59,10 @@ export const projectValidationSchema = Yup.object({
 
   billable: Yup.boolean().notRequired(),
 
-  hourlyRateType: Yup.string()
-    .oneOf(["default", "custom"], "Invalid hourly rate type")
-    .notRequired(),
-
-  customRate: Yup.string().when("hourlyRateType", {
-    is: "custom",
-    then: (schema) =>
-      schema.required(
-        "Custom rate is required when custom rate type is selected"
-      ),
-    otherwise: (schema) => schema.notRequired(),
-  }),
+  default_billable_rate: Yup.number()
+    .required("Default billable rate is required")
+    .integer("Billable rate must be a whole number")
+    .min(1, "Billable rate must be greater than 0"),
 });
 
 // Type inference from schema
@@ -114,6 +106,5 @@ export const defaultProjectFormData: Partial<ProjectFormData> = {
   inviteMembers: "",
   access: "regular",
   billable: true,
-  hourlyRateType: "default",
-  customRate: "",
+  default_billable_rate: 100,
 };

@@ -83,6 +83,19 @@ export interface PayoutOut {
   payout_metadata?: Record<string, any>;
 }
 
+// Freelancer Finance Summary Types
+export interface FreelancerFinanceSummaryOut {
+  freelancer_user_id: string;
+  currency: string;
+  total_hours: number;
+  total_cost: number;
+  paid_total: number;
+  pending_payout_total: number;
+  due_total: number;
+  from_ts?: string;
+  to_ts?: string;
+}
+
 export interface PayoutMarkCompletedRequest {
   payout_reference: string;
   paid_at?: string;
@@ -144,6 +157,7 @@ export interface ExpenseCreate {
   description: string;
   receipt_url?: string;
   incurred_at?: string; // optional per backend; not returned
+  billable?: boolean; // whether this expense is billable
 }
 
 export interface ExpenseOut {
@@ -155,6 +169,7 @@ export interface ExpenseOut {
   category: string;
   description: string;
   receipt_url?: string;
+  billable: boolean;
   created_at: string;
   created_by: string;
 }
@@ -216,11 +231,19 @@ export const financeApiService = {
     return response.data;
   },
 
-  listPayouts: async (freelancer_id?: string): Promise<PayoutOut[]> => {
+  listPayouts: async (
+    options?: { freelancer_email?: string; freelancer_id?: string }
+  ): Promise<PayoutOut[]> => {
     const params = new URLSearchParams();
-    if (freelancer_id) params.append("freelancer_id", freelancer_id);
+    if (options?.freelancer_email)
+      params.append("freelancer_email", options.freelancer_email);
+    else if (options?.freelancer_id)
+      params.append("freelancer_id", options.freelancer_id);
 
-    const response = await api.get(`/finance/payouts?${params.toString()}`);
+    const query = params.toString();
+    const response = await api.get(
+      `/finance/payouts${query ? `?${query}` : ""}`
+    );
     return response.data;
   },
 
@@ -231,6 +254,21 @@ export const financeApiService = {
     const response = await api.post(
       `/finance/payouts/${payout_id}/mark-completed`,
       payload
+    );
+    return response.data;
+  },
+
+  // Freelancer Finance Summary (Per-user)
+  getFreelancerFinanceSummary: async (
+    user_id: string,
+    from?: string,
+    to?: string
+  ): Promise<FreelancerFinanceSummaryOut> => {
+    const params = new URLSearchParams();
+    if (from) params.append("from", from);
+    if (to) params.append("to", to);
+    const response = await api.get(
+      `/finance/freelancers/${user_id}/summary${params.size ? `?${params.toString()}` : ""}`
     );
     return response.data;
   },

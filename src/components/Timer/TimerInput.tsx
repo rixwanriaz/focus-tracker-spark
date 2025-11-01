@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Play, Square, Tag, DollarSign, FolderOpen, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ export const TimerInput: React.FC<TimerInputProps> = ({
 }) => {
   const [displayTime, setDisplayTime] = useState('0:00:00');
   const [showProjectSelect, setShowProjectSelect] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -83,6 +85,17 @@ export const TimerInput: React.FC<TimerInputProps> = ({
 
   const selectedProject = projects.find(p => p.id === timerState.project_id);
   const selectedTask = tasks.find(t => t.id === timerState.task_id);
+
+  const handleCreateProject = () => {
+    setShowProjectSelect(false);
+    navigate('/projects?new=1');
+  };
+
+  const handleCreateTask = () => {
+    if (!timerState.project_id) return;
+    setShowProjectSelect(false);
+    navigate(`/projects/${timerState.project_id}?newTask=1`);
+  };
 
   return (
     <div className="bg-gray-950 border-b border-gray-800">
@@ -143,6 +156,15 @@ export const TimerInput: React.FC<TimerInputProps> = ({
                                 {project.name}
                               </SelectItem>
                             ))}
+                            <div className="px-2 py-2 border-t border-gray-800">
+                              <Button
+                                variant="outline"
+                                className="w-full border-gray-700 text-gray-300 hover:bg-gray-800"
+                                onClick={handleCreateProject}
+                              >
+                                + Create new project
+                              </Button>
+                            </div>
                           </SelectContent>
                         </Select>
                       </div>
@@ -168,9 +190,19 @@ export const TimerInput: React.FC<TimerInputProps> = ({
                                 ))
                               ) : (
                                 <div className="px-2 py-6 text-center text-sm text-gray-500">
-                                  No tasks available
+                                No tasks available
                                 </div>
                               )}
+                            <div className="px-2 py-2 border-t border-gray-800">
+                              <Button
+                                variant="outline"
+                                className="w-full border-gray-700 text-gray-300 hover:bg-gray-800"
+                                onClick={handleCreateTask}
+                                disabled={!timerState.project_id}
+                              >
+                                + Create new task
+                              </Button>
+                            </div>
                             </SelectContent>
                           </Select>
                         </div>

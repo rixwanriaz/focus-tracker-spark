@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -15,6 +15,11 @@ interface GanttChartProps {
 }
 
 export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTasks, totalCompleted, averageProgress }) => {
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const taskBarRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [headerTooltip, setHeaderTooltip] = useState<{ visible: boolean; x: number; y: number; text: string }>(() => ({ visible: false, x: 0, y: 0, text: '' }));
+  const [hoverGuide, setHoverGuide] = useState<{ visible: boolean; x: number; text: string }>(() => ({ visible: false, x: 0, text: '' }));
   // Calculate the timeline range
   const timelineRange = useMemo(() => {
     if (!data || !data.tasks || !data.tasks.length) return null;
@@ -59,6 +64,56 @@ export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTask
     if (progress >= 100) return 'text-green-500';
     if (progress >= 50) return 'text-yellow-500';
     return 'text-blue-500';
+  };
+
+  const computeHeaderTooltip = (clientX: number, clientY: number) => {
+    if (!timelineRange || !headerRef.current) return;
+    const bounds = headerRef.current.getBoundingClientRect();
+    const clampedX = Math.max(bounds.left, Math.min(clientX, bounds.right));
+    const ratio = (clampedX - bounds.left) / Math.max(1, bounds.width);
+    const hoveredDate = new Date(timelineRange.minDate.getTime() + ratio * (timelineRange.maxDate.getTime() - timelineRange.minDate.getTime()));
+    const today = new Date();
+    const inRange = today >= timelineRange.minDate && today <= timelineRange.maxDate;
+    const elapsedPct = Math.round(((today.getTime() - timelineRange.minDate.getTime()) / (timelineRange.maxDate.getTime() - timelineRange.minDate.getTime())) * 100);
+    const overall = averageProgress ?? Math.round((data?.tasks?.reduce((s, t) => s + (t.progress || 0), 0) || 0) / Math.max(1, data?.tasks?.length || 1));
+
+    const text = `Start: ${formatDate(timelineRange.minDate.toISOString())}  |  Hover: ${formatDate(hoveredDate.toISOString())}  |  Today: ${inRange ? formatDate(today.toISOString()) : '—'} (${inRange ? Math.max(0, Math.min(100, elapsedPct)) : '—'}%)  |  End: ${formatDate(timelineRange.maxDate.toISOString())}  |  Overall progress: ${overall}%`;
+    setHeaderTooltip({ visible: true, x: clampedX - bounds.left, y: clientY - bounds.top, text });
+  };
+
+  const computeContainerHover = (clientX: number, task?: { name: string; start_date: string; end_date: string; progress: number }) => {
+    if (!timelineRange || !containerRef.current) return;
+    const bounds = containerRef.current.getBoundingClientRect();
+    const clampedX = Math.max(bounds.left, Math.min(clientX, bounds.right));
+    const ratio = (clampedX - bounds.left) / Math.max(1, bounds.width);
+    const hoveredDate = new Date(timelineRange.minDate.getTime() + ratio * (timelineRange.maxDate.getTime() - timelineRange.minDate.getTime()));
+    const today = new Date();
+    const inRange = today >= timelineRange.minDate && today <= timelineRange.maxDate;
+    const elapsedPct = Math.round(((today.getTime() - timelineRange.minDate.getTime()) / (timelineRange.maxDate.getTime() - timelineRange.minDate.getTime())) * 100);
+    const overall = averageProgress ?? Math.round((data?.tasks?.reduce((s, t) => s + (t.progress || 0), 0) || 0) / Math.max(1, data?.tasks?.length || 1));
+    const text = task
+      ? `Task: ${task.name}  |  Start: ${formatDate(task.start_date)}  |  Hover: ${formatDate(hoveredDate.toISOString())}  |  Today: ${inRange ? formatDate(today.toISOString()) : '—'}  |  End: ${formatDate(task.end_date)}  |  Progress: ${task.progress}%`
+      : `Start: ${formatDate(timelineRange.minDate.toISOString())}  |  Hover: ${formatDate(hoveredDate.toISOString())}  |  Today: ${inRange ? formatDate(today.toISOString()) : '—'} (${inRange ? Math.max(0, Math.min(100, elapsedPct)) : '—'}%)  |  End: ${formatDate(timelineRange.maxDate.toISOString())}  |  Overall progress: ${overall}%`;
+    setHoverGuide({ visible: true, x: clampedX - bounds.left, text });
+  };
+
+  const registerTaskBar = (taskId: string, el: HTMLDivElement | null) => {
+    taskBarRefs.current[taskId] = el;
+  };
+
+  const hitTestTaskAt = (clientX: number, clientY: number): { id: string; rect: DOMRect } | null => {
+    const entries = Object.entries(taskBarRefs.current).filter(([, el]) => !!el) as Array<[string, HTMLDivElement]>;
+    let best: { id: string; rect: DOMRect } | null = null;
+    for (const [id, el] of entries) {
+      const rect = el.getBoundingClientRect();
+      const inside = clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+      if (!inside) continue;
+      // Choose the bar whose top is closest to the pointer (acts like topmost for stacked lanes)
+      if (!best || Math.abs(clientY - rect.top) < Math.abs(clientY - best.rect.top)) {
+        best = { id, rect };
+      }
+    }
+    return best;
   };
 
   if (loading) {
@@ -107,6 +162,36 @@ export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTask
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Unified hover layer across the whole gantt section */}
+        <div
+          ref={containerRef}
+          className="relative"
+          onMouseMove={(e) => {
+            const hit = hitTestTaskAt(e.clientX, e.clientY);
+            if (hit && data) {
+              const task = (data.tasks as any[]).find((t) => t.id === hit.id);
+              if (task) return computeContainerHover(e.clientX, { name: task.name, start_date: task.start_date, end_date: task.end_date, progress: task.progress });
+            }
+            return computeContainerHover(e.clientX);
+          }}
+          onMouseLeave={() => setHoverGuide((s) => ({ ...s, visible: false }))}
+        >
+          {hoverGuide.visible && (
+            <>
+              <div
+                className="pointer-events-none absolute inset-y-0 w-px bg-gray-500/40 z-20"
+                style={{ insetInlineStart: `${hoverGuide.x}px` }}
+              />
+              <div
+                className="pointer-events-none absolute z-30 -translate-y-8"
+                style={{ insetInlineStart: `${hoverGuide.x}px`, insetBlockStart: 0 }}
+              >
+                <div className="max-w-[640px] whitespace-nowrap px-2 py-1 text-[11px] rounded bg-gray-900/95 border border-gray-700 shadow-xl text-gray-200">
+                  {hoverGuide.text}
+                </div>
+              </div>
+            </>
+          )}
         {/* Timeline Header */}
         {timelineRange && (
           <div className="border-b border-gray-800 pb-4">
@@ -114,7 +199,13 @@ export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTask
               <span>{formatDate(timelineRange.minDate.toISOString())}</span>
               <span>{formatDate(timelineRange.maxDate.toISOString())}</span>
             </div>
-            <div className="h-2 bg-gray-800 rounded-full relative">
+            <div
+              ref={headerRef}
+              className="h-2 bg-gray-800 rounded-full relative cursor-crosshair"
+              onMouseEnter={(e) => computeHeaderTooltip(e.clientX, e.clientY)}
+              onMouseMove={(e) => computeHeaderTooltip(e.clientX, e.clientY)}
+              onMouseLeave={() => setHeaderTooltip((s) => ({ ...s, visible: false }))}
+            >
               {/* Today marker */}
               {(() => {
                 const today = new Date();
@@ -133,6 +224,18 @@ export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTask
                 }
                 return null;
               })()}
+
+              {/* Hover tooltip for header timeline */}
+              {headerTooltip.visible && (
+                <div
+                  className="absolute z-20 pointer-events-none select-none -translate-y-10"
+                  style={{ insetInlineStart: `${headerTooltip.x}px` }}
+                >
+                  <div className="max-w-[560px] whitespace-nowrap px-2 py-1 text-[11px] rounded bg-gray-900/95 border border-gray-700 shadow-xl text-gray-200">
+                    {headerTooltip.text}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -193,7 +296,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTask
                 </div>
 
                 {/* Task Timeline Bar */}
-                <div className="relative h-8 bg-gray-800 rounded-lg overflow-hidden">
+                <div
+                  className="relative h-8 bg-gray-800 rounded-lg overflow-hidden"
+                  ref={(el) => registerTaskBar(task.id, el)}
+                >
                   <div
                     className="absolute [inset-block-start:0] h-full bg-purple-600/20 border-s-2 border-e-2 border-purple-600"
                     style={{
@@ -206,6 +312,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTask
                       style={{ inlineSize: `${task.progress}%` }}
                     />
                   </div>
+
+                  
 
                   {/* Milestone markers on task timeline */}
                   {(data.milestones || []).map((milestone) => {
@@ -267,6 +375,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ data, loading, totalTask
             </div>
             <div className="text-sm text-gray-400">Overall Progress</div>
           </div>
+        </div>
         </div>
       </CardContent>
     </Card>

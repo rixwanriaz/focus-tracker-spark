@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Plus, Calendar, Clock, User, AlertCircle, CheckCircle2, Circle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,11 @@ const formatDate = (dateString: string): string => {
 const isOverdue = (dueDate: string): boolean => {
   return new Date(dueDate) < new Date() && new Date(dueDate).toDateString() !== new Date().toDateString();
 };
+
+// Today in local timezone formatted for <input type="date">
+const TODAY_INPUT = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+  .toISOString()
+  .split("T")[0];
 
 export interface TaskItemProps {
   task: Task;
@@ -133,7 +138,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   <Input
                     type="date"
                     value={editData.due_date}
-                    onChange={(e) => setEditData({ ...editData, due_date: e.target.value })}
+                onChange={(e) => setEditData({ ...editData, due_date: e.target.value })}
+                min={TODAY_INPUT}
                     className="bg-gray-700 border-gray-600 text-white w-40"
                   />
                 </div>
@@ -289,11 +295,13 @@ export const TaskList: React.FC<TaskListProps> = ({
 
 export interface NewTaskDialogProps {
   projectId: string;
-  onCreateTask: (projectId: string, taskData: CreateTaskRequest) => void;
+  onCreateTask: (projectId: string, taskData: CreateTaskRequest) => Promise<any> | any;
   assignees?: Array<{ id: string; email: string }>;
   assigneesLoading?: boolean;
   onEnsureAssignees?: () => void;
   loading?: boolean;
+  // When true, the dialog will open automatically once
+  autoOpen?: boolean;
 }
 
 export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
@@ -303,20 +311,30 @@ export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
   assigneesLoading = false,
   onEnsureAssignees,
   loading = false,
+  autoOpen = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<CreateTaskRequest>({
     title: "",
     description: "",
     priority: "medium",
-    due_date: "",
+    due_date: TODAY_INPUT,
     assignee_id: undefined,
     project_id: projectId,
   });
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  // Open dialog automatically when requested
+  useEffect(() => {
+    if (autoOpen) {
+      setOpen(true);
+    }
+  }, [autoOpen]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) return;
+    setSubmitError(null);
 
     // Clean up form data - convert empty strings to undefined for optional fields
     const cleanedFormData: CreateTaskRequest = {
@@ -328,18 +346,22 @@ export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
       project_id: projectId,
     };
 
-    onCreateTask(projectId, cleanedFormData);
-    
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      priority: "medium",
-      due_date: "",
-      assignee_id: undefined,
-      project_id: projectId,
-    });
-    setOpen(false);
+    try {
+      await Promise.resolve(onCreateTask(projectId, cleanedFormData));
+      // Reset form only on success
+      setFormData({
+        title: "",
+        description: "",
+        priority: "medium",
+        due_date: "",
+        assignee_id: undefined,
+        project_id: projectId,
+      });
+      setOpen(false);
+    } catch (err: any) {
+      const message = typeof err === "string" ? err : err?.message || "Failed to create task";
+      setSubmitError(message);
+    }
   }, [formData, projectId, onCreateTask]);
 
   return (
@@ -369,6 +391,12 @@ export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {submitError && (
+            <div className="p-3 rounded-md border border-red-500/30 bg-red-500/10 text-red-300 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5" />
+              <div className="text-sm">{submitError}</div>
+            </div>
+          )}
           <div>
             <label className="text-sm font-medium text-gray-300 mb-2 block">Title *</label>
             <Input
@@ -420,6 +448,7 @@ export const NewTaskDialog: React.FC<NewTaskDialogProps> = ({
                 type="date"
                 value={formData.due_date}
                 onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                min={TODAY_INPUT}
                 className="bg-gray-800/50 border-gray-700 text-white focus:bg-gray-800 focus:border-purple-500/50 transition-all duration-200"
               />
             </div>

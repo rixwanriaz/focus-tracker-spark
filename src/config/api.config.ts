@@ -9,8 +9,8 @@ export const API_CONFIG = {
   // Base URL for all API requests
   BASE_URL:
     import.meta.env.VITE_API_BASE_URL ||
-    "https://joeltimetracking-cahjhyguh4fcd0hn.canadacentral-01.azurewebsites.net/api/v1",
-    //"http://localhost:8000/api/v1",
+    //"https://joeltimetracking-cahjhyguh4fcd0hn.canadacentral-01.azurewebsites.net/api/v1",
+    "http://localhost:8000/api/v1",
 
   // API Endpoints
   ENDPOINTS: {
@@ -87,6 +87,7 @@ export const API_CONFIG = {
       CAPACITY: "/reports/capacity",
       EXPORTS: "/reports/exports",
       EXPORT_BY_ID: (exportId: string) => `/reports/${exportId}`,
+      DAILY_TEAM_TIME: "/reports/daily-team-time",
     },
     FORECAST: {
       BY_PROJECT_POST: (id: string) => `/forecast/project/${id}`,

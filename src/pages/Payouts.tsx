@@ -13,6 +13,8 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { createPayout, fetchPayouts, markPayoutCompleted } from "@/redux/slice/financeSlice";
 import { Download, Plus, Check, User } from "lucide-react";
 import { projectApiService } from "@/redux/api/project";
+import { getOrganizationMembers } from "@/redux/slice/organizationSlice";
+import { getOrgIdFromToken } from "@/lib/jwt";
 import type { Project, ProjectMember } from "@/redux/api/project";
 import { CalendarPicker } from "@/components/ui/calendar-picker";
 
@@ -21,6 +23,7 @@ const currencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"];
 const Payouts: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { payouts, payoutsLoading, payoutsError } = useSelector((s: RootState) => s.finance);
+  const { members: orgMembers, loadingMembers: loadingOrgMembers } = useSelector((s: RootState) => s.organization);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({
@@ -39,12 +42,71 @@ const Payouts: React.FC = () => {
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [projectMap, setProjectMap] = useState<Record<string, Project>>({});
   const [memberMap, setMemberMap] = useState<Record<string, ProjectMember>>({});
-  const [filterFreelancerId, setFilterFreelancerId] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<{
+    currency: string;
+    total_hours: number;
+    total_cost: number;
+    paid_total: number;
+    pending_payout_total: number;
+    due_total: number;
+  } | null>(null);
   const [exportFrom, setExportFrom] = useState("");
+  const [summaryFrom, setSummaryFrom] = useState("");
+  const [summaryTo, setSummaryTo] = useState("");
 
+  // Load organization members on mount
   useEffect(() => {
-    dispatch(fetchPayouts({ freelancer_id: filterFreelancerId || undefined }));
-  }, [dispatch, filterFreelancerId]);
+    const orgId = getOrgIdFromToken();
+    if (orgId && (!orgMembers || orgMembers.length === 0)) {
+      dispatch(getOrganizationMembers(orgId));
+    }
+  }, [dispatch]);
+
+  // Fetch payouts when a user is selected
+  useEffect(() => {
+    if (!selectedUserEmail) return;
+    dispatch(fetchPayouts({ freelancer_email: selectedUserEmail }));
+  }, [dispatch, selectedUserEmail]);
+
+  // Fetch summary for selected user on selection or date changes
+  useEffect(() => {
+    if (!selectedUserId) {
+      setSummary(null);
+      setSummaryError(null);
+      return;
+    }
+    setSummaryLoading(true);
+    setSummaryError(null);
+    import("@/redux/api/finance")
+      .then(({ financeApiService }) =>
+        financeApiService.getFreelancerFinanceSummary(
+          selectedUserId as string,
+          summaryFrom ? new Date(summaryFrom).toISOString() : undefined,
+          summaryTo ? new Date(summaryTo).toISOString() : undefined
+        )
+      )
+      .then((data) => {
+        setSummary({
+          currency: data.currency,
+          total_hours: data.total_hours,
+          total_cost: data.total_cost,
+          paid_total: data.paid_total,
+          pending_payout_total: data.pending_payout_total,
+          due_total: data.due_total,
+        });
+      })
+      .catch((err: any) => {
+        setSummary(null);
+        setSummaryError(
+          err?.message || "Failed to load freelancer finance summary"
+        );
+      })
+      .finally(() => setSummaryLoading(false));
+  }, [selectedUserId, summaryFrom, summaryTo]);
 
   // Load projects and build maps for display
   useEffect(() => {
@@ -129,8 +191,14 @@ const Payouts: React.FC = () => {
       setFreelancerEmail("");
       setProjectMembers([]);
       setScheduledDate(undefined);
-      // Refresh the payouts list
-      dispatch(fetchPayouts({ freelancer_id: filterFreelancerId || undefined }));
+      // Refresh the payouts list for the selected user
+      if (selectedUserEmail) {
+        dispatch(
+          fetchPayouts({
+            freelancer_email: selectedUserEmail,
+          })
+        );
+      }
     } catch (err: any) {
       toast.error(err || "Failed to create payout");
     }
@@ -162,13 +230,47 @@ const Payouts: React.FC = () => {
   return (
     <div className="w-full">
       <div className="space-y-6">
-          <div className="flex items-center justify-end gap-3">
-            <Label className="text-gray-300 text-sm">Filter by Freelancer</Label>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <Label className="text-gray-300 text-sm">User</Label>
+            <Select
+              value={selectedUserId || "none"}
+              onValueChange={(value) => {
+                if (value === "none") {
+                  setSelectedUserId("");
+                  setSelectedUserEmail("");
+                  setSummary(null);
+                  return;
+                }
+                const mem = orgMembers.find((m) => m.user.id === value);
+                setSelectedUserId(value);
+                setSelectedUserEmail(mem?.user.email || "");
+              }}
+            >
+              <SelectTrigger className="bg-gray-800 border-gray-700 w-72">
+                <SelectValue placeholder={loadingOrgMembers ? "Loading users..." : "Select user"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" className="text-gray-300">None</SelectItem>
+                {orgMembers.map((m) => (
+                  <SelectItem key={m.user.id} value={m.user.id} className="text-gray-300">
+                    {m.user.full_name || m.user.email} ({m.user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Label className="text-gray-300 text-sm">Summary From</Label>
             <Input
-              placeholder="freelancer_user_id"
-              value={filterFreelancerId}
-              onChange={(e) => setFilterFreelancerId(e.target.value)}
-              className="bg-gray-800 border-gray-700 w-48"
+              type="date"
+              value={summaryFrom}
+              onChange={(e) => setSummaryFrom(e.target.value)}
+              className="bg-gray-800 border-gray-700 w-44"
+            />
+            <Label className="text-gray-300 text-sm">To</Label>
+            <Input
+              type="date"
+              value={summaryTo}
+              onChange={(e) => setSummaryTo(e.target.value)}
+              className="bg-gray-800 border-gray-700 w-44"
             />
             <Label className="text-gray-300 text-sm">Export from</Label>
             <Input
@@ -186,6 +288,58 @@ const Payouts: React.FC = () => {
               New Payout
             </Button>
           </div>
+
+          {summary || summaryLoading || summaryError ? (
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white">Freelancer Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {summaryLoading && (
+                  <div className="text-gray-400 text-sm">Loading summary…</div>
+                )}
+                {summaryError && (
+                  <div className="text-red-400 text-sm">{summaryError}</div>
+                )}
+                {summary && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-200">
+                    <div>
+                      <div className="text-gray-400">Currency</div>
+                      <div>{summary.currency}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Total Hours</div>
+                      <div>{summary.total_hours.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Total Cost</div>
+                      <div>
+                        {summary.currency} {summary.total_cost.toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Paid Total</div>
+                      <div>
+                        {summary.currency} {summary.paid_total.toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Pending Payouts</div>
+                      <div>
+                        {summary.currency} {summary.pending_payout_total.toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400">Due Total</div>
+                      <div>
+                        {summary.currency} {summary.due_total.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card className="bg-gray-900 border-gray-800">
             <CardHeader>

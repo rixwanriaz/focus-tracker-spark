@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { MainLayout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ const Projects: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
 
   // Get user info from Redux store
   const { user } = useSelector((state: RootState) => ({
@@ -62,6 +64,13 @@ const Projects: React.FC = () => {
 
     loadProjects();
   }, [showArchived, searchQuery]);
+
+  // Open the create project dialog when ?new=1
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const handleCreateProject = async (projectData: CreateProjectRequest) => {
     try {

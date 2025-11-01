@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   ArrowLeft,
@@ -20,7 +20,7 @@ import {
   TaskFiltersComponent,
   TaskTable,
 } from "@/components/Tasks";
-import { ProjectMembersTab } from "@/components/Projects";
+import { ProjectMembersTab, ProjectTeamTimeTab } from "@/components/Projects";
 import ProjectTimeline from "@/components/Projects/ProjectTimeline";
 import { ProjectUserCostsTab, ProjectExpensesTab } from "@/components/Finance";
 import { CalendarPicker } from "@/components/ui/calendar-picker";
@@ -58,6 +58,7 @@ import { getForecast } from "@/redux/slice/reportsSlice";
 const ProjectDetail: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
 
   // Redux state
@@ -80,6 +81,7 @@ const ProjectDetail: React.FC = () => {
 
   // Local state
   const [activeTab, setActiveTab] = useState("tasks");
+  const autoOpenNewTask = searchParams.get("newTask") === "1";
   const [taskFilters, setTaskFilters] = useState<TaskFilters>({});
   const [startDate, setStartDate] = useState<Date | undefined>(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [endDate, setEndDate] = useState<Date | undefined>(() => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999));
@@ -113,14 +115,16 @@ const ProjectDetail: React.FC = () => {
     projectId: string,
     taskData: CreateTaskRequest
   ) => {
-    try {
-      await dispatch(createTask({ projectId, data: taskData })).unwrap();
-      toast.success("Task created successfully!");
-      // Refresh tasks to show the new task
-      dispatch(getProjectTasks({ projectId, filters: taskFilters }));
-    } catch (error) {
-      toast.error("Failed to create task");
-    }
+    const result = await dispatch(createTask({ projectId, data: taskData })).unwrap().catch((err) => {
+      // Forward the exact error back to the dialog while also showing a toast
+      const message = typeof err === "string" ? err : err?.message || "Failed to create task";
+      toast.error(message);
+      throw message;
+    });
+    toast.success("Task created successfully!");
+    // Refresh tasks to show the new task
+    dispatch(getProjectTasks({ projectId, filters: taskFilters }));
+    return result;
   };
 
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
@@ -419,7 +423,7 @@ const ProjectDetail: React.FC = () => {
         {/* Main Content */}
         <div className="px-6 pb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6 bg-gray-900 border border-gray-800 rounded-xl p-1 shadow-lg">
+            <TabsList className="grid w-full grid-cols-7 bg-gray-900 border border-gray-800 rounded-xl p-1 shadow-lg">
               <TabsTrigger
                 value="tasks"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
@@ -455,6 +459,12 @@ const ProjectDetail: React.FC = () => {
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
               >
                 Expenses
+              </TabsTrigger>
+              <TabsTrigger
+                value="time-tracking"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-gray-400 hover:text-gray-300 transition-all data-[state=active]:shadow-lg rounded-lg font-medium"
+              >
+                Time Tracking
               </TabsTrigger>
             </TabsList>
 
@@ -522,6 +532,7 @@ const ProjectDetail: React.FC = () => {
                         }
                       }}
                       loading={creating}
+                      autoOpen={autoOpenNewTask}
                     />
                   </div>
                 </div>
@@ -684,6 +695,10 @@ const ProjectDetail: React.FC = () => {
 
             <TabsContent value="expenses" className="mt-6">
               <ProjectExpensesTab projectId={projectId!} />
+            </TabsContent>
+
+            <TabsContent value="time-tracking" className="mt-6">
+              <ProjectTeamTimeTab projectId={projectId!} />
             </TabsContent>
           </Tabs>
         </div>

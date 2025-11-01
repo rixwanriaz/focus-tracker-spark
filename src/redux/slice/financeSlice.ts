@@ -285,17 +285,23 @@ export const createPayout = createAsyncThunk<
 
 export const fetchPayouts = createAsyncThunk<
   PayoutOut[],
-  { freelancer_id?: string },
+  { freelancer_email?: string; freelancer_id?: string },
   { rejectValue: string }
->("finance/fetchPayouts", async ({ freelancer_id }, { rejectWithValue }) => {
-  try {
-    const result = await financeApiService.listPayouts(freelancer_id);
-    return result;
-  } catch (err: any) {
-    const errorMessage = getErrorMessage(err);
-    return rejectWithValue(errorMessage);
+>(
+  "finance/fetchPayouts",
+  async ({ freelancer_email, freelancer_id }, { rejectWithValue }) => {
+    try {
+      const result = await financeApiService.listPayouts({
+        freelancer_email,
+        freelancer_id,
+      });
+      return result;
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err);
+      return rejectWithValue(errorMessage);
+    }
   }
-});
+);
 
 export const markPayoutCompleted = createAsyncThunk<
   PayoutOut,
