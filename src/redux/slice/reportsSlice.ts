@@ -132,13 +132,14 @@ export const getForecast = createAsyncThunk<
 });
 
 export const getDailyTeamTimeReport = createAsyncThunk<
-  { date: string; data: DailyTeamTimeResponse },
+  { key: string; data: DailyTeamTimeResponse },
   DailyTeamTimeQuery,
   { rejectValue: string }
 >("reports/getDailyTeamTimeReport", async (query, { rejectWithValue }) => {
   try {
     const data = await reportsApi.getDailyTeamTimeReport(query);
-    return { date: query.date, data };
+    const key = `${query.from_date}_${query.to_date}`;
+    return { key, data };
   } catch (e: any) {
     return rejectWithValue(e?.response?.data?.detail || e?.message || "Failed to get daily team time report");
   }
@@ -272,18 +273,18 @@ const reportsSlice = createSlice({
 
       // Daily team time report
       .addCase(getDailyTeamTimeReport.pending, (state, action) => {
-        const date = action.meta.arg.date;
-        state.loading.dailyTeamTime[date] = true;
+        const key = `${action.meta.arg.from_date}_${action.meta.arg.to_date}`;
+        state.loading.dailyTeamTime[key] = true;
         state.error = null;
       })
       .addCase(getDailyTeamTimeReport.fulfilled, (state, action) => {
-        const { date, data } = action.payload;
-        state.loading.dailyTeamTime[date] = false;
-        state.dailyTeamTime[date] = data;
+        const { key, data } = action.payload;
+        state.loading.dailyTeamTime[key] = false;
+        state.dailyTeamTime[key] = data;
       })
       .addCase(getDailyTeamTimeReport.rejected, (state, action) => {
-        const date = action.meta.arg.date;
-        state.loading.dailyTeamTime[date] = false;
+        const key = `${action.meta.arg.from_date}_${action.meta.arg.to_date}`;
+        state.loading.dailyTeamTime[key] = false;
         state.error = action.payload || "Failed to get daily team time report";
       })
 

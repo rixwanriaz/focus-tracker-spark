@@ -285,15 +285,16 @@ export const createPayout = createAsyncThunk<
 
 export const fetchPayouts = createAsyncThunk<
   PayoutOut[],
-  { freelancer_email?: string; freelancer_id?: string },
+  { freelancer_email?: string; freelancer_id?: string; status?: string },
   { rejectValue: string }
 >(
   "finance/fetchPayouts",
-  async ({ freelancer_email, freelancer_id }, { rejectWithValue }) => {
+  async ({ freelancer_email, freelancer_id, status }, { rejectWithValue }) => {
     try {
       const result = await financeApiService.listPayouts({
         freelancer_email,
         freelancer_id,
+        status,
       });
       return result;
     } catch (err: any) {

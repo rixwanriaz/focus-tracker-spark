@@ -1,238 +1,400 @@
-# Daily Team Time Report API
+# Task & Comment API Documentation
 
-This document describes the new Daily Team Time Report endpoint that provides administrators with a comprehensive view of time tracking data for a specific day across all projects and team members.
+This document describes all the API endpoints for task and comment management in the Jira-like task tracking system.
 
-## Overview
+## Authentication
 
-The Daily Team Time Report endpoint allows administrators to view how much time each team member has spent on each project for a specific day. This report is essential for:
-
-- Daily time tracking oversight
-- Project progress monitoring
-- Team productivity analysis
-- Resource allocation planning
-- Billing and financial reporting
-
-## Endpoint Details
-
-### URL
+All endpoints require JWT authentication. Include the JWT token in the `Authorization` header:
 ```
-GET /api/v1/reports/daily-team-time
+Authorization: Bearer <your-jwt-token>
 ```
 
-### Method
-`GET`
+## Task Endpoints
 
-### Authentication & Authorization
-- **Authentication**: Required (user must be logged in)
-- **Authorization**: Admin only (requires `finance:read` permission)
-- **Organization Scope**: Limited to the authenticated user's organization
+### Create Task (Direct)
 
-## Parameters
+**Endpoint:** `POST /api/v1/tasks`
 
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| `date` | `date` (ISO format) | Yes | The date for which to generate the time report | `2024-11-01` |
-| `project_id` | `UUID` | No | Optional project UUID to filter results to a specific project | `550e8400-e29b-41d4-a716-446655440000` |
+**Description:** Create a new task or subtask directly. The `project_id` must be included in the request body.
 
-### Query Parameters
-```
-GET /api/v1/reports/daily-team-time?date=2024-11-01&project_id=550e8400-e29b-41d4-a716-446655440000
-```
-
-## Response
-
-### Success Response (200 OK)
-
+**Request Body:**
 ```json
 {
-  "date": "2024-11-01",
-  "projects": [
-    {
-      "project_id": "550e8400-e29b-41d4-a716-446655440000",
-      "project_name": "Project Alpha",
-      "team_members": [
-        {
-          "user_id": "550e8400-e29b-41d4-a716-446655440001",
-          "user_email": "john.doe@company.com",
-          "project_id": "550e8400-e29b-41d4-a716-446655440000",
-          "project_name": "Project Alpha",
-          "date": "2024-11-01",
-          "total_hours": 8.5,
-          "billable_hours": 7.0
-        },
-        {
-          "user_id": "550e8400-e29b-41d4-a716-446655440002",
-          "user_email": "jane.smith@company.com",
-          "project_id": "550e8400-e29b-41d4-a716-446655440000",
-          "project_name": "Project Alpha",
-          "date": "2024-11-01",
-          "total_hours": 6.25,
-          "billable_hours": 6.25
-        }
-      ]
-    },
-    {
-      "project_id": "550e8400-e29b-41d4-a716-446655440003",
-      "project_name": "Project Beta",
-      "team_members": [
-        {
-          "user_id": "550e8400-e29b-41d4-a716-446655440001",
-          "user_email": "john.doe@company.com",
-          "project_id": "550e8400-e29b-41d4-a716-446655440003",
-          "project_name": "Project Beta",
-          "date": "2024-11-01",
-          "total_hours": 2.5,
-          "billable_hours": 2.5
-        }
-      ]
-    }
-  ]
+  "project_id": "uuid",
+  "parent_task_id": "uuid", // Optional - set for subtasks
+  "title": "string",
+  "description": "string", // Optional
+  "status": "string", // Optional - defaults to "not_started"
+  "priority": "string", // Optional - defaults to "medium"
+  "assignee_id": "uuid", // Optional
+  "estimate_seconds": "integer", // Optional
+  "start_date": "date", // Optional
+  "due_date": "date" // Optional
 }
 ```
 
-### Response Schema
+**Response (201 Created):**
+```json
+{
+  "id": "uuid",
+  "project_id": "uuid",
+  "parent_task_id": "uuid", // null for main tasks
+  "title": "string",
+  "description": "string",
+  "status": "string",
+  "priority": "string",
+  "assignee_id": "uuid",
+  "assignee_email": "string",
+  "estimate_seconds": "integer",
+  "start_date": "date",
+  "due_date": "date",
+  "completed_at": "datetime",
+  "created_by": "uuid",
+  "created_at": "datetime",
+  "updated_at": "datetime",
+  "logged_seconds": "integer"
+}
+```
 
-#### DailyTeamTimeResponse
-| Field | Type | Description |
-|-------|------|-------------|
-| `date` | `date` | The date for which the report was generated |
-| `projects` | `Array<DailyProjectTimeItem>` | List of projects with team member time data |
+### Create Task (By Project)
 
-#### DailyProjectTimeItem
-| Field | Type | Description |
-|-------|------|-------------|
-| `project_id` | `UUID` | Unique identifier of the project |
-| `project_name` | `string` | Name of the project |
-| `team_members` | `Array<DailyTeamTimeItem>` | List of team members who logged time on this project |
+**Endpoint:** `POST /api/v1/projects/{project_id}/tasks`
 
-#### DailyTeamTimeItem
-| Field | Type | Description |
-|-------|------|-------------|
-| `user_id` | `UUID` | Unique identifier of the team member |
-| `user_email` | `string` | Email address of the team member |
-| `project_id` | `UUID` | Unique identifier of the project |
-| `project_name` | `string` | Name of the project |
-| `date` | `date` | The date for which time was logged |
-| `total_hours` | `float` | Total hours logged by the user on this project for the day |
-| `billable_hours` | `float` | Billable hours logged by the user on this project for the day |
+**Description:** Create a new task or subtask for a specific project.
+
+**Request Body:**
+```json
+{
+  "parent_task_id": "uuid", // Optional - set for subtasks
+  "title": "string",
+  "description": "string", // Optional
+  "status": "string", // Optional - defaults to "not_started"
+  "priority": "string", // Optional - defaults to "medium"
+  "assignee_id": "uuid", // Optional
+  "estimate_seconds": "integer", // Optional
+  "start_date": "date", // Optional
+  "due_date": "date" // Optional
+}
+```
+
+**Response:** Same as Create Task (Direct) above.
+
+### List Tasks
+
+**Endpoint:** `GET /api/v1/tasks`
+
+**Description:** List tasks with optional filters. Only returns tasks from the user's organization.
+
+**Query Parameters:**
+- `project_id` (UUID): Filter by project
+- `status` (string): Filter by status (not_started, in_progress, blocked, completed, cancelled)
+- `priority` (string): Filter by priority (low, medium, high)
+- `assignee_id` (UUID): Filter by assignee
+- `parent_task_id` (UUID): Filter by parent task (list subtasks)
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "uuid",
+    "project_id": "uuid",
+    "parent_task_id": "uuid", // null for main tasks
+    "title": "string",
+    "description": "string",
+    "status": "string",
+    "priority": "string",
+    "assignee_id": "uuid",
+    "assignee_email": "string",
+    "estimate_seconds": "integer",
+    "start_date": "date",
+    "due_date": "date",
+    "completed_at": "datetime",
+    "created_by": "uuid",
+    "created_at": "datetime",
+    "updated_at": "datetime",
+    "logged_seconds": "integer"
+  }
+]
+```
+
+### List Tasks by Project
+
+**Endpoint:** `GET /api/v1/projects/{project_id}/tasks`
+
+**Description:** List tasks for a specific project with optional filters.
+
+**Query Parameters:**
+- `status` (string): Filter by status
+- `assignee_id` (UUID): Filter by assignee
+- `due_from` (date): Filter tasks due after this date
+- `due_to` (date): Filter tasks due before this date
+- `limit` (integer): Maximum number of results (1-500, default: 100)
+- `offset` (integer): Pagination offset (default: 0)
+
+**Response:** Same as List Tasks above.
+
+### Get Task
+
+**Endpoint:** `GET /api/v1/tasks/{task_id}`
+
+**Description:** Get a specific task by ID.
+
+**Response (200 OK):** Single task object as shown in List Tasks.
+
+### Update Task
+
+**Endpoint:** `PATCH /api/v1/tasks/{task_id}`
+
+**Description:** Update a task's properties. Only include fields you want to update.
+
+**Request Body:**
+```json
+{
+  "parent_task_id": "uuid", // Optional
+  "title": "string", // Optional
+  "description": "string", // Optional
+  "status": "string", // Optional
+  "priority": "string", // Optional
+  "assignee_id": "uuid", // Optional
+  "estimate_seconds": "integer", // Optional
+  "start_date": "date", // Optional
+  "due_date": "date" // Optional
+}
+```
+
+**Response (200 OK):** Updated task object as shown in List Tasks.
+
+### Complete Task
+
+**Endpoint:** `POST /api/v1/tasks/{task_id}/complete`
+
+**Description:** Mark a task as completed.
+
+**Request Body:**
+```json
+{
+  "comment": "string" // Optional completion comment
+}
+```
+
+**Response (200 OK):** Updated task object with status "completed".
+
+### Reopen Task
+
+**Endpoint:** `POST /api/v1/tasks/{task_id}/reopen`
+
+**Description:** Reopen a completed task (change status back to "in_progress").
+
+**Request Body:** None
+
+**Response (200 OK):** Updated task object with status "in_progress".
+
+### Delete Task
+
+**Endpoint:** `DELETE /api/v1/tasks/{task_id}`
+
+**Description:** Delete a task. Cannot delete tasks that have subtasks.
+
+**Response (204 No Content):** Empty response on success.
+
+### List Subtasks
+
+**Endpoint:** `GET /api/v1/tasks/{task_id}/subtasks`
+
+**Description:** List all subtasks for a specific parent task.
+
+**Response (200 OK):** Array of task objects as shown in List Tasks.
+
+### Get Project Task Statistics
+
+**Endpoint:** `GET /api/v1/projects/{project_id}/tasks/stats`
+
+**Description:** Get task statistics for a project.
+
+**Response (200 OK):**
+```json
+{
+  "project_id": "uuid",
+  "total_tasks": "integer",
+  "completed_tasks": "integer",
+  "in_progress_tasks": "integer",
+  "not_started_tasks": "integer",
+  "blocked_tasks": "integer",
+  "cancelled_tasks": "integer",
+  "overdue_tasks": "integer",
+  "progress_percentage": "float"
+}
+```
+
+## Comment Endpoints
+
+### List Comments
+
+**Endpoint:** `GET /api/v1/tasks/{task_id}/comments`
+
+**Description:** List all comments for a specific task.
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "uuid",
+    "task_id": "uuid",
+    "author_id": "uuid",
+    "body": "string",
+    "created_at": "datetime",
+    "updated_at": "datetime"
+  }
+]
+```
+
+### Create Comment
+
+**Endpoint:** `POST /api/v1/tasks/{task_id}/comments`
+
+**Description:** Add a comment to a task.
+
+**Request Body:**
+```json
+{
+  "body": "string"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "id": "uuid",
+  "task_id": "uuid",
+  "author_id": "uuid",
+  "body": "string",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### Update Comment
+
+**Endpoint:** `PATCH /api/v1/comments/{comment_id}`
+
+**Description:** Update a comment's content.
+
+**Request Body:**
+```json
+{
+  "body": "string" // Optional - if not provided, comment will be empty
+}
+```
+
+**Response (200 OK):** Updated comment object as shown above.
+
+### Delete Comment
+
+**Endpoint:** `DELETE /api/v1/comments/{comment_id}`
+
+**Description:** Delete a comment.
+
+**Response (204 No Content):** Empty response on success.
+
+## Task Status Values
+
+- `not_started`: Task has not been started
+- `in_progress`: Task is currently being worked on
+- `blocked`: Task is blocked and cannot proceed
+- `completed`: Task has been completed
+- `cancelled`: Task has been cancelled
+
+## Task Priority Values
+
+- `low`: Low priority
+- `medium`: Medium priority (default)
+- `high`: High priority
+
+## Validation Rules
+
+### Task Creation/Update
+- `title` is required and must be non-empty
+- `due_date` must be on or after `start_date` (if both provided)
+- `parent_task_id` must reference an existing task in the same project
+- `assignee_id` must be a member of the project (if provided)
+- Cannot set a task as its own parent
+
+### Task Deletion
+- Cannot delete tasks that have existing subtasks
+
+### Date Constraints
+- `start_date` cannot be before the project's creation date
+- `due_date` cannot be before the project's creation date
+- `start_date` cannot be before today (for new tasks)
 
 ## Error Responses
 
-### 401 Unauthorized
-```json
-{
-  "detail": "Not authenticated"
-}
-```
+**400 Bad Request:**
+- Invalid data format
+- Validation errors (e.g., due_date before start_date)
+- Assignee not a project member
+- Parent task not found or in different project
+- Task has subtasks (cannot delete)
 
-### 403 Forbidden
-```json
-{
-  "detail": "Forbidden"
-}
-```
+**401 Unauthorized:**
+- Missing or invalid JWT token
 
-### 400 Bad Request
-```json
-{
-  "detail": "Invalid datetime format: ..."
-}
-```
+**403 Forbidden:**
+- Insufficient permissions
 
-## Data Source & Calculation
+**404 Not Found:**
+- Task, project, or comment not found
 
-### Time Entry Aggregation
-- The report aggregates data from the `TimeEntry` table
-- Only includes completed time entries (`end_ts` is not null)
-- Filters time entries that started within the specified date (00:00:00 to 23:59:59 UTC)
-- Optionally filters by project when `project_id` parameter is provided
-- Groups data by user and project
-- Calculates both total and billable hours
+**422 Unprocessable Entity:**
+- Invalid UUID format
+- Invalid enum values
 
-### Data Relationships
-- Links `TimeEntry` with `User` to get user emails
-- Links `TimeEntry` with `Project` to get project names
-- Handles cases where project might be null (shows as "No Project")
+## Example Usage
 
-### Business Logic
-- **Billable Hours**: Only includes time entries marked as `billable = true`
-- **Total Hours**: Includes all logged time regardless of billable status
-- **Organization Scope**: Limited to the authenticated user's organization
-- **Date Range**: Uses the exact date provided (no date range expansion)
-
-## Usage Examples
-
-### Using cURL
+### Create a Main Task
 ```bash
-curl -X GET \
-  "http://localhost:8000/api/v1/reports/daily-team-time?date=2024-11-01&project_id=550e8400-e29b-41d4-a716-446655440000" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+curl -X POST "http://localhost:8000/api/v1/tasks" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Implement user authentication",
+    "description": "Implement login, signup, and password reset",
+    "priority": "high"
+  }'
 ```
 
-### Using Python (httpx)
-```python
-import httpx
-from datetime import date
-
-response = httpx.get(
-    "http://localhost:8000/api/v1/reports/daily-team-time",
-    params={
-        "date": date.today().isoformat(),
-        "project_id": "550e8400-e29b-41d4-a716-446655440000"  # Optional: filter to specific project
-    },
-    headers={"Authorization": "Bearer YOUR_JWT_TOKEN"}
-)
-
-data = response.json()
-for project in data["projects"]:
-    print(f"Project: {project['project_name']}")
-    for member in project["team_members"]:
-        print(f"  {member['user_email']}: {member['total_hours']} hours")
+### Create a Subtask
+```bash
+curl -X POST "http://localhost:8000/api/v1/tasks" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": "550e8400-e29b-41d4-a716-446655440000",
+    "parent_task_id": "550e8400-e29b-41d4-a716-446655440001",
+    "title": "Create login form UI",
+    "description": "Design and implement the login form component"
+  }'
 ```
 
-### Using JavaScript (fetch)
-```javascript
-const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-
-fetch(`http://localhost:8000/api/v1/reports/daily-team-time?date=${date}&project_id=550e8400-e29b-41d4-a716-446655440000`, {
-  method: 'GET',
-  headers: {
-    'Authorization': 'Bearer YOUR_JWT_TOKEN',
-    'Content-Type': 'application/json'
-  }
-})
-.then(response => response.json())
-.then(data => {
-  console.log(`Report for ${data.date}`);
-  data.projects.forEach(project => {
-    console.log(`Project: ${project.project_name}`);
-    project.team_members.forEach(member => {
-      console.log(`  ${member.user_email}: ${member.total_hours} hours`);
-    });
-  });
-});
+### Add a Comment
+```bash
+curl -X POST "http://localhost:8000/api/v1/tasks/550e8400-e29b-41d4-a716-446655440001/comments" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "body": "This looks good! Just need to add validation for email format."
+  }'
 ```
 
-## Integration Notes
+### List Tasks with Filters
+```bash
+curl -X GET "http://localhost:8000/api/v1/tasks?project_id=550e8400-e29b-41d4-a716-446655440000&status=in_progress" \
+  -H "Authorization: Bearer <token>"
+```
 
-### Frontend Integration
-- Use this endpoint to build daily time tracking dashboards
-- Combine with other reporting endpoints for comprehensive analytics
-- Cache results appropriately since historical data doesn't change frequently
-
-### Backend Integration
-- Consider implementing caching for frequently accessed dates
-- May want to add pagination if organizations grow very large
-- Consider async processing for organizations with extensive time tracking data
-
-## Related Endpoints
-
-- `GET /api/v1/reports/time` - General time reports with flexible grouping
-- `GET /api/v1/projects/{project_id}/user-costs` - User costs for a specific project
-- `GET /api/v1/projects/{project_id}/financials` - Financial overview for a project
-
-## Security Considerations
-
-- Only accessible to users with admin role or `finance:read` permission
-- Data is scoped to the user's organization
-- No sensitive information is exposed beyond what's needed for time tracking oversight
+### Get Project Statistics
+```bash
+curl -X GET "http://localhost:8000/api/v1/projects/550e8400-e29b-41d4-a716-446655440000/tasks/stats" \
+  -H "Authorization: Bearer <token>"
+```

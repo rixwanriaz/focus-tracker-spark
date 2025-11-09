@@ -84,26 +84,30 @@ export interface ForecastResponse {
 export interface DailyTeamTimeItem {
   user_id: string;
   user_email: string;
-  project_id: string;
-  project_name: string;
-  date: string;
   total_hours: number;
   billable_hours: number;
+}
+
+export interface DailyTeamTimeDateItem {
+  date: string;
+  team_members: DailyTeamTimeItem[];
 }
 
 export interface DailyProjectTimeItem {
   project_id: string;
   project_name: string;
-  team_members: DailyTeamTimeItem[];
+  dates: DailyTeamTimeDateItem[];
 }
 
 export interface DailyTeamTimeResponse {
-  date: string;
+  from_date: string;
+  to_date: string;
   projects: DailyProjectTimeItem[];
 }
 
 export interface DailyTeamTimeQuery {
-  date: string; // ISO date YYYY-MM-DD
+  from_date: string; // ISO date YYYY-MM-DD
+  to_date: string; // ISO date YYYY-MM-DD
   project_id?: string; // Optional project UUID to filter results
 }
 

@@ -15,11 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MainLayout } from "@/components/Layout";
-import {
-  NewTaskDialog,
-  TaskFiltersComponent,
-  TaskTable,
-} from "@/components/Tasks";
+import { NewTaskDialog, TaskFiltersComponent } from "@/components/Tasks";
+import { TasksTable } from "@/features/tasks/components/TasksTable";
+import { TaskDetailDrawer } from "@/features/tasks/components/TaskDetailDrawer";
 import { ProjectMembersTab, ProjectTeamTimeTab } from "@/components/Projects";
 import ProjectTimeline from "@/components/Projects/ProjectTimeline";
 import { ProjectUserCostsTab, ProjectExpensesTab } from "@/components/Finance";
@@ -85,6 +83,7 @@ const ProjectDetail: React.FC = () => {
   const [taskFilters, setTaskFilters] = useState<TaskFilters>({});
   const [startDate, setStartDate] = useState<Date | undefined>(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [endDate, setEndDate] = useState<Date | undefined>(() => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999));
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   // Load project data
   useEffect(() => {
@@ -211,11 +210,11 @@ const ProjectDetail: React.FC = () => {
   }, 0);
 
   // Format project members for task assignment
-  const assigneesForFilters = projectMembers.map((member) => ({
+  const formattedProjectMembers = projectMembers.map((member) => ({
     id: member.user_id,
-    first_name:
-      member.user?.first_name || member.user_email?.split("@")[0] || "",
+    first_name: member.user?.first_name || member.user_email?.split("@")[0] || "",
     last_name: member.user?.last_name || "",
+    email: member.user_email,
   }));
 
   const assigneesForDialog = projectMembers.map((member) => ({
@@ -477,7 +476,7 @@ const ProjectDetail: React.FC = () => {
                       filters={taskFilters}
                       onFiltersChange={handleFiltersChange}
                       onClearFilters={handleClearFilters}
-                      assignees={assigneesForFilters}
+                      assignees={formattedProjectMembers}
                     />
                   </CardContent>
                 </Card>
@@ -540,16 +539,33 @@ const ProjectDetail: React.FC = () => {
                 {/* Task Display */}
                 <Card className="bg-gray-900 border-gray-800 shadow-xl rounded-xl overflow-hidden">
                   <CardContent className="p-0">
-                    <TaskTable
+                    <TasksTable
                       tasks={filteredTasks}
-                      onUpdate={handleUpdateTask}
-                      onStatusChange={handleStatusChange}
-                      onDelete={handleDeleteTask}
                       loading={tasksLoading}
+                      projectMembers={formattedProjectMembers}
+                      onUpdateTask={(taskId, updates) => handleUpdateTask(taskId, updates as any)}
+                      onStatusChange={(taskId, status) => handleStatusChange(taskId, status)}
+                      onAssigneeChange={(taskId, assigneeId) => handleUpdateTask(taskId, { assignee_id: assigneeId || undefined } as any)}
+                      onPriorityChange={(taskId, priority) => handleUpdateTask(taskId, { priority } as any)}
+                      onDeleteTask={(t) => handleDeleteTask(t.id)}
+                      onCompleteTask={(taskId) => handleCompleteTask(taskId)}
+                      onReopenTask={(taskId) => handleReopenTask(taskId)}
+                      onOpenDetail={(t) => setDetailTaskId(t.id)}
+                      onCreateSubtask={(t) => setTaskFilters(prev => ({ ...prev }))}
+                      onViewSubtasks={(taskId) => setTaskFilters(prev => ({ ...prev, parent_task_id: taskId }))}
                     />
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Task Detail Drawer */}
+              <TaskDetailDrawer
+                open={!!detailTaskId}
+                onOpenChange={(open) => !open && setDetailTaskId(null)}
+                taskId={detailTaskId}
+                projectId={projectId!}
+                projectMembers={formattedProjectMembers}
+              />
             </TabsContent>
 
             <TabsContent value="overview" className="mt-6">

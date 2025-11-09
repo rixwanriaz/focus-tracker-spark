@@ -61,6 +61,12 @@ export const API_CONFIG = {
       BY_PROJECT: (projectId: string) => `/projects/${projectId}/tasks`,
       COMPLETE: (id: string) => `/tasks/${id}/complete`,
       REOPEN: (id: string) => `/tasks/${id}/reopen`,
+      SUBTASKS: (id: string) => `/tasks/${id}/subtasks`,
+      STATS: (projectId: string) => `/projects/${projectId}/tasks/stats`,
+      COMMENTS: (id: string) => `/tasks/${id}/comments`,
+    },
+    COMMENTS: {
+      BY_ID: (id: string) => `/comments/${id}`,
     },
     ORGANIZATIONS: {
       BASE: "/organizations",

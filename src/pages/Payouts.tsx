@@ -44,6 +44,7 @@ const Payouts: React.FC = () => {
   const [memberMap, setMemberMap] = useState<Record<string, ProjectMember>>({});
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
@@ -66,11 +67,14 @@ const Payouts: React.FC = () => {
     }
   }, [dispatch]);
 
-  // Fetch payouts when a user is selected
+  // Fetch payouts when a user is selected or status changes
   useEffect(() => {
-    if (!selectedUserEmail) return;
-    dispatch(fetchPayouts({ freelancer_email: selectedUserEmail }));
-  }, [dispatch, selectedUserEmail]);
+    if (!selectedUserEmail && !selectedStatus) return;
+    dispatch(fetchPayouts({
+      freelancer_email: selectedUserEmail || undefined,
+      status: selectedStatus || undefined
+    }));
+  }, [dispatch, selectedUserEmail, selectedStatus]);
 
   // Fetch summary for selected user on selection or date changes
   useEffect(() => {
@@ -191,14 +195,13 @@ const Payouts: React.FC = () => {
       setFreelancerEmail("");
       setProjectMembers([]);
       setScheduledDate(undefined);
-      // Refresh the payouts list for the selected user
-      if (selectedUserEmail) {
-        dispatch(
-          fetchPayouts({
-            freelancer_email: selectedUserEmail,
-          })
-        );
-      }
+      // Refresh the payouts list for the selected user and status
+      dispatch(
+        fetchPayouts({
+          freelancer_email: selectedUserEmail || undefined,
+          status: selectedStatus || undefined
+        })
+      );
     } catch (err: any) {
       toast.error(err || "Failed to create payout");
     }
@@ -256,6 +259,25 @@ const Payouts: React.FC = () => {
                     {m.user.full_name || m.user.email} ({m.user.email})
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Label className="text-gray-300 text-sm">Status</Label>
+            <Select
+              value={selectedStatus || "all"}
+              onValueChange={(value) => {
+                setSelectedStatus(value === "all" ? "" : value);
+              }}
+            >
+              <SelectTrigger className="bg-gray-800 border-gray-700 w-32">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-gray-300">All</SelectItem>
+                <SelectItem value="pending" className="text-gray-300">Pending</SelectItem>
+                <SelectItem value="processing" className="text-gray-300">Processing</SelectItem>
+                <SelectItem value="completed" className="text-gray-300">Completed</SelectItem>
+                <SelectItem value="failed" className="text-gray-300">Failed</SelectItem>
+                <SelectItem value="cancelled" className="text-gray-300">Cancelled</SelectItem>
               </SelectContent>
             </Select>
             <Label className="text-gray-300 text-sm">Summary From</Label>

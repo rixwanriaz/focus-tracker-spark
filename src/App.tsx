@@ -15,6 +15,7 @@ import Reports from "./pages/Reports";
 import Approvals from "./pages/Approvals";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import ProjectTasksPage from "./pages/ProjectTasksPage";
 import Clients from "./pages/Clients";
 import BillableRates from "./pages/BillableRates";
 import Invoices from "./pages/Invoices";
@@ -83,21 +84,29 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/projects/:projectId" 
+            <Route
+              path="/projects/:projectId"
               element={
                 <ProtectedRoute>
                   <ProjectDetail />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/clients" 
+            <Route
+              path="/projects/:projectId/tasks"
+              element={
+                <ProtectedRoute>
+                  <ProjectTasksPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients"
               element={
                 <ProtectedRoute>
                   <Clients />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route 
               path="/billable-rates" 

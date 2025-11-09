@@ -74,7 +74,7 @@ export interface PayoutOut {
   amount: number;
   currency: string;
   payout_method: string;
-  status: "pending" | "completed" | "failed";
+  status: "pending" | "processing" | "completed" | "failed" | "cancelled";
   payout_reference?: string;
   scheduled_for?: string;
   paid_at?: string;
@@ -232,13 +232,15 @@ export const financeApiService = {
   },
 
   listPayouts: async (
-    options?: { freelancer_email?: string; freelancer_id?: string }
+    options?: { freelancer_email?: string; freelancer_id?: string; status?: string }
   ): Promise<PayoutOut[]> => {
     const params = new URLSearchParams();
     if (options?.freelancer_email)
       params.append("freelancer_email", options.freelancer_email);
     else if (options?.freelancer_id)
       params.append("freelancer_id", options.freelancer_id);
+    if (options?.status)
+      params.append("status", options.status);
 
     const query = params.toString();
     const response = await api.get(
