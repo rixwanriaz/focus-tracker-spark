@@ -38,11 +38,11 @@ export const LeaderboardTable: React.FC<Props> = ({ data, loading }) => {
                 {data.items.map((it) => (
                   <TableRow key={it.project_id}>
                     <TableCell className="text-white">{it.project_name}</TableCell>
-                    <TableCell className="text-white text-right">{it.revenue.toFixed(2)}</TableCell>
-                    <TableCell className="text-white text-right">{it.cost.toFixed(2)}</TableCell>
-                    <TableCell className="text-white text-right">{it.profit.toFixed(2)}</TableCell>
-                    <TableCell className="text-white text-right">{it.margin.toFixed(2)}%</TableCell>
-                    <TableCell className="text-white text-right">{it.billable_hours.toFixed(2)}</TableCell>
+                    <TableCell className="text-white text-right">${(it.revenue ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-white text-right">${(it.cost ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-white text-right">${(it.profit ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-white text-right">{(it.margin ?? 0).toFixed(2)}%</TableCell>
+                    <TableCell className="text-white text-right">{(it.billable_hours ?? 0).toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
