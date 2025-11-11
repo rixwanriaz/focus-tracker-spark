@@ -53,11 +53,11 @@ export const CapacityTable: React.FC<Props> = ({ data, loading }) => {
                 {data.items.map((it) => (
                   <TableRow key={it.user_id}>
                     <TableCell className="text-white">{it.user_id}</TableCell>
-                    <TableCell className="text-white text-right">{it.available_hours.toFixed(1)}</TableCell>
-                    <TableCell className="text-white text-right">{it.booked_hours.toFixed(1)}</TableCell>
-                    <TableCell className="text-white text-right">{it.actual_hours.toFixed(1)}</TableCell>
-                    <TableCell className="text-white text-right">{Math.round(it.utilization * 100)}%</TableCell>
-                    <TableCell className="text-white text-right">{Math.round(it.booking_load * 100)}%</TableCell>
+                    <TableCell className="text-white text-right">{(it.available_hours ?? 0).toFixed(1)}</TableCell>
+                    <TableCell className="text-white text-right">{(it.booked_hours ?? 0).toFixed(1)}</TableCell>
+                    <TableCell className="text-white text-right">{(it.actual_hours ?? 0).toFixed(1)}</TableCell>
+                    <TableCell className="text-white text-right">{Math.round((it.utilization ?? 0) * 100)}%</TableCell>
+                    <TableCell className="text-white text-right">{Math.round((it.booking_load ?? 0) * 100)}%</TableCell>
                     <TableCell className="text-white text-right">
                       <Badge variant="outline" className={statusColor(it.status)}>
                         {it.status}

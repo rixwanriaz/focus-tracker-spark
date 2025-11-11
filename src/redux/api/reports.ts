@@ -30,11 +30,11 @@ export interface TimeReportResponse {
 export interface LeaderboardItem {
   project_id: string;
   project_name: string;
-  revenue: number;
-  cost: number;
-  profit: number;
-  margin: number; // percentage number 0-100
-  billable_hours: number;
+  revenue: number | null;
+  cost: number | null;
+  profit: number | null;
+  margin: number | null; // percentage number 0-100
+  billable_hours: number | null;
 }
 
 export interface LeaderboardResponse {
@@ -44,11 +44,11 @@ export interface LeaderboardResponse {
 
 export interface CapacityItem {
   user_id: string;
-  available_hours: number;
-  booked_hours: number;
-  actual_hours: number;
-  utilization: number; // 0..1
-  booking_load: number; // 0..1
+  available_hours: number | null;
+  booked_hours: number | null;
+  actual_hours: number | null;
+  utilization: number | null; // 0..1
+  booking_load: number | null; // 0..1
   status: "underbooked" | "balanced" | "overbooked";
 }
 

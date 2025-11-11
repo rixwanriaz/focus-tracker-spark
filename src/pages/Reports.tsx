@@ -84,7 +84,10 @@ const Reports: React.FC = () => {
       dispatch(setLastTimeQuery(filters));
     }
     if (!leaderboard) dispatch(fetchLeaderboard({ sort_by: 'profitability', limit: 10 }));
-    if (!capacity) dispatch(fetchCapacity({ from_date: filters.from_date, to_date: filters.to_date }));
+    if (!capacity) {
+      // Fetch capacity without date filters initially to avoid 422 errors
+      dispatch(fetchCapacity());
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
